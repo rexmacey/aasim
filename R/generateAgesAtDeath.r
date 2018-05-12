@@ -9,10 +9,14 @@
 #' @param mort.factor A value multiplied by each mortality value. Higher than 1 shortens lifespan
 #'
 #' @return Vector of ages at death
+#' @export
+#'
+#' @examples generateAgesAtDeath(51, "Male", 10, 1.0)
 #'
 generateAgesAtDeath <- function(curAge, gender, n = 1, mort.factor=1.0) {
-    #load(file="./data/mortality.rdata")
-    mortality <- readRDS("./data/mortality.rds")
+    # load(file="./data/mortality.rdata")
+    # mortality <- readRDS("./inst/extdata/mortality.rds")
+    mortality <- load("./data/mortality.rda") # load mortality table
     maxAge <- mortality[nrow(mortality), "age"]
     out <- integer(n)
     if (curAge < 0)

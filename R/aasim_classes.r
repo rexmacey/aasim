@@ -64,7 +64,7 @@ initializeSim <-
 #'
 #' @examples sim1<-addPerson.sim(sim1,"Rex Macey","RM",56,"M",65,1.0)
 addPerson.sim<-function(sim,name,initials, curAge,gender,retireAge,mort.factor=1.0){
-    npersons<-length(sim$persons)
+    # npersons <- length(sim$persons)
     p<-list()
     p[["name"]]<-name
     p[["initials"]]<-initials
@@ -72,7 +72,7 @@ addPerson.sim<-function(sim,name,initials, curAge,gender,retireAge,mort.factor=1
     p[["gender"]]<-gender
     p[["retireAge"]]<-retireAge
     p[["mort.factor"]]<-mort.factor
-    sim[["persons"]][[length(sim[["persons"]])+1]]<-p
+    sim[["persons"]][[length(sim[["persons"]])+1]] <- p
     return(sim)
 }
 
@@ -116,6 +116,7 @@ initializeCF<-function(){
         amount=double(),
         inflationAdj=logical()
     )
+    return(cf.df)
 }
 
 #' Validate a Cash Flow Type
@@ -156,45 +157,30 @@ validateCFType<-function(strCF){
 #' @return A data frame with the cash flows of the simulation and the added cash flow
 #' @export
 #'
-#' @examples addCF(sim1$cf,"Retirement Expense","p1ret",0,"p1death",0,"w",40000,TRUE)
-addCF<-function(simCF,description,startType,start,endType,end,type,amount,inflationAdj){
-    new.df<-data.frame(
-        description=description, # description of cash flow
-        startType=startType,
-        start=start,
-        endType=endType,
-        end=end,
-        type=type,
-        amount=amount,
-        inflationAdj=inflationAdj
-    )
-    simCF<-rbind(simCF,new.df)
-    return(simCF)
-}
-
-#' Add a person to the simulation
-#'
-#' @param name Name of person
-#' @param initials initials or short name which can be useful when space is limited
-#' @param curAge Current age
-#' @param gender 'M' for male or 'F' for female
-#' @param retireAge Retirement age
-#' @param mort.factor Mortality factor.  1.0 is the default.  Higher values shorten life expectancy.
-#'
-#' @return list with person's information
-#' @export
-#'
-#' @examples p1<-initializePerson("Rex Macey","RM",56,"M",65,1.0)
-# addPerson<-function(sim,name,initials, curAge,gender,retireAge,mort.factor=1.0){
-#     p<-list()
-#     p[["name"]]<-name
-#     p[["initials"]]<-initials
-#     p[["curAge"]]<-curAge
-#     p[["gender"]]<-gender
-#     p[["retireAge"]]<-retireAge
-#     p[["mort.factor"]]<-mort.factor
-#     return(p)
-# }
+#' @examples addCF(simCF, "Retirement Expense", "p1ret", 0, "p1death", 0, "w", 40000, TRUE)
+addCF <-
+    function(simCF,
+             description,
+             startType,
+             start,
+             endType,
+             end,
+             type,
+             amount,
+             inflationAdj) {
+        new.df <- data.frame(
+            description = description, # description of cash flow
+            startType = startType,
+            start = start,
+            endType = endType,
+            end = end,
+            type = type,
+            amount = amount,
+            inflationAdj = inflationAdj
+        )
+        simCF <- rbind(simCF, new.df)
+        return(simCF)
+    }
 
 
 

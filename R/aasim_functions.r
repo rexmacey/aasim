@@ -142,7 +142,7 @@ cvtCF2Yr<-function(cfType,sim,length,ageDeath1,ageDeath2,value){
 #' @param ageDeath1 age of death of person 1 if applicable
 #' @param ageDeath2 age of death of person 2 if applicable
 #'
-#' @return
+#' @return vector of cash flows for a single trial
 #'
 #' @examples calcCF(sim,10,82,91)
 calcCF<-function(sim,length,ageDeath1,ageDeath2){

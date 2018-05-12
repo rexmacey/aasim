@@ -22,3 +22,7 @@ Vector of ages at death
 This function generates ages at death depending on a mortality table. If n=1, the function
 will return the life expectancy.
 }
+\examples{
+generateAgesAtDeath(51, "Male", 10, 1.0)
+
+}

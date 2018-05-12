@@ -40,5 +40,5 @@ start is first year (equivalent to startType=='yr' and specifying 1 for the star
 end is last year
 }
 \examples{
-addCF(sim1$cf,"Retirement Expense","p1ret",0,"p1death",0,"w",40000,TRUE)
+addCF(simCF, "Retirement Expense", "p1ret", 0, "p1death", 0, "w", 40000, TRUE)
 }

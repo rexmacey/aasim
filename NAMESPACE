@@ -3,6 +3,7 @@
 export(addCF)
 export(addPerson.sim)
 export(calcRandReturns)
+export(generateAgesAtDeath)
 export(initializeSim)
 export(nCF.sim)
 export(nPersons.sim)

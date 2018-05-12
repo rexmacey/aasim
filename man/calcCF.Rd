@@ -16,7 +16,7 @@ calcCF(sim, length, ageDeath1, ageDeath2)
 \item{ageDeath2}{age of death of person 2 if applicable}
 }
 \value{
-
+vector of cash flows for a single trial
 }
 \description{
 This takes all the cash flows and combines them into a vector of values for a single trial.
