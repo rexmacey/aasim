@@ -13,5 +13,5 @@ Data frame with no rows but columns for cash flows
 Initialize Cash Flow data frame
 }
 \examples{
-initializeCF()
+\dontrun{initializeCF()}
 }

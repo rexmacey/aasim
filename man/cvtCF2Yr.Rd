@@ -26,5 +26,5 @@ integer representing year in which cash flow starts or ends
 cfType must be in "yr,start,end,p1age,p1ret,p1death,p2age,p2ret,p2death,1stdeath,2nddeath"
 }
 \examples{
-cvtCF2Yr(cf$startType,sim,length,ageDeath1,ageDeath2,cf$start)
+ \dontrun{cvtCF2Yr(cf$startType,sim,length,ageDeath1,ageDeath2,cf$start)}
 }

@@ -23,5 +23,5 @@ This takes all the cash flows and combines them into a vector of values for a si
 Each value in the vector represents a contribution (+) or withdrawal (-) for the  year.
 }
 \examples{
-calcCF(sim,10,82,91)
+\dontrun{calcCF(sim,10,82,91)}
 }

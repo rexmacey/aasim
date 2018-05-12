@@ -16,5 +16,5 @@ Number of persons in object
 Number of persons in a sim(ulation) object
 }
 \examples{
-nPersons.sim(sim1)
+\dontrun{nPersons.sim(sim1)}
 }

@@ -15,7 +15,7 @@
 Society of Actuaries
 }
 \usage{
-mortality
+data(mortality)
 }
 \description{
 A mortality table containing the probability of males and females

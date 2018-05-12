@@ -30,15 +30,17 @@ addCF(simCF, description, startType, start, endType, end, type, amount,
 A data frame with the cash flows of the simulation and the added cash flow
 }
 \description{
-Here are the types that describe when a cash flow starts or ends:
-yr indicates a numeric value will be supplied such as 1 to start year one and 10 to end year 10.
-p1age, p2age is the age of person1 or person 2
-p1ret, p2ret is the retirement age of person1 or person 2
-p1death, p2death is the age at death  of person1 or person 2
-1stdeath, 2nddeath is the death of the 1st to die, or the 2nd to die
-start is first year (equivalent to startType=='yr' and specifying 1 for the start)
-end is last year
+Here are the types that describe when a cash flow starts or ends: yr
+indicates a numeric value will be supplied such as 1 to start year one and 10
+to end year 10. p1age, p2age is the age of person1 or person 2 p1ret, p2ret
+is the retirement age of person1 or person 2 p1death, p2death is the age at
+death  of person1 or person 2 1stdeath, 2nddeath is the death of the 1st to
+die, or the 2nd to die start is first year (equivalent to startType=='yr' and
+specifying 1 for the start) end is last year
 }
 \examples{
-addCF(simCF, "Retirement Expense", "p1ret", 0, "p1death", 0, "w", 40000, TRUE)
+\dontrun{simCF <- addCF(simCF, description, startType, start,
+                   endType, end, type, amount, inflationAdj)}
+\dontrun{simCF <- addCF(simCF, "Retirement Expense", "p1ret", 0,
+                   "p1death", 0, "w", 40000, TRUE)}
 }

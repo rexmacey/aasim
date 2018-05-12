@@ -11,7 +11,7 @@
 #'   ratesOfReturns is a list each item is a vector of 1 + the annual rate of return
 #' @export
 #'
-#' @examples simulate(sim)
+#' @examples \dontrun{simulate(sim)}
 simulate<-function(sim){
     trials<-getHorizons.sim(sim)
     portfolioValues<-list()
@@ -46,7 +46,7 @@ simulate<-function(sim){
 #' @return List with three vectors. lengths is number of years in each trial; agesDeath1 are the ages at which the first person passes,
 #' agesDeath2 are the ages at which the second person passes.
 #'
-#' @examples getHorizons(sim1)
+#' @examples \dontrun{getHorizons(sim1)}
 getHorizons.sim<-function(sim){
     #source("generateAgesAtDeath.r")
     out<-list()
@@ -94,7 +94,7 @@ getHorizons.sim<-function(sim){
 #'
 #' @return integer representing year in which cash flow starts or ends
 #'
-#' @examples cvtCF2Yr(cf$startType,sim,length,ageDeath1,ageDeath2,cf$start)
+#' @examples  \dontrun{cvtCF2Yr(cf$startType,sim,length,ageDeath1,ageDeath2,cf$start)}
 cvtCF2Yr<-function(cfType,sim,length,ageDeath1,ageDeath2,value){
     if (nPersons.sim(sim)==0){
         yr<-switch(tolower(cfType),
@@ -144,7 +144,7 @@ cvtCF2Yr<-function(cfType,sim,length,ageDeath1,ageDeath2,value){
 #'
 #' @return vector of cash flows for a single trial
 #'
-#' @examples calcCF(sim,10,82,91)
+#' @examples \dontrun{calcCF(sim,10,82,91)}
 calcCF<-function(sim,length,ageDeath1,ageDeath2){
     out<-numeric(length)
 

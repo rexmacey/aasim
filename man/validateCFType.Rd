@@ -16,5 +16,5 @@ Logical value. TRUE is a valid cash flow type, FALSE if not.
 Validate a Cash Flow Type
 }
 \examples{
-validateCFType("p1age")
+\dontrun{validateCFType("p1age")}
 }

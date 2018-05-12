@@ -16,5 +16,5 @@ Number of cash flows in object
 Number of cash flows in a sim(ulation) object
 }
 \examples{
-nCF.sim(sim1)
+\dontrun{nCF.sim(sim1)}
 }

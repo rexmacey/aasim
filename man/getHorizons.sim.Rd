@@ -17,5 +17,5 @@ agesDeath2 are the ages at which the second person passes.
 This will return the lengths of each trial
 }
 \examples{
-getHorizons(sim1)
+\dontrun{getHorizons(sim1)}
 }

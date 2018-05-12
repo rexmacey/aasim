@@ -11,12 +11,13 @@
 #' @return Vector of ages at death
 #' @export
 #'
-#' @examples generateAgesAtDeath(51, "Male", 10, 1.0)
+#' @examples  \dontrun{generateAgesAtDeath(51, "Male", 10, 1.0)}
 #'
 generateAgesAtDeath <- function(curAge, gender, n = 1, mort.factor=1.0) {
     # load(file="./data/mortality.rdata")
     # mortality <- readRDS("./inst/extdata/mortality.rds")
-    mortality <- load("./data/mortality.rda") # load mortality table
+    #mortality <- load("./data/mortality.rda") # load mortality table
+    utils::data("mortality")
     maxAge <- mortality[nrow(mortality), "age"]
     out <- integer(n)
     if (curAge < 0)

@@ -22,5 +22,5 @@ A list with 6 items.
 Runs a simulation on a simulation object
 }
 \examples{
-simulate(sim)
+\dontrun{simulate(sim)}
 }

@@ -28,5 +28,6 @@ sim object with person added to simulation
 Add Person to persons list in a simulation
 }
 \examples{
-sim1<-addPerson.sim(sim1,"Rex Macey","RM",56,"M",65,1.0)
+\dontrun{sim1<-addPerson.sim(sim, name, initials, curAge, gender, retireAge, mort.factor)}
+\dontrun{sim1<-addPerson.sim(sim1,"Rex Macey","RM",56,"M",65,1.0)}
 }
