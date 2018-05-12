@@ -1,4 +1,3 @@
-
 #' Runs a simulation on a simulation object
 #'
 #' @param sim sim(ulation) object
@@ -149,8 +148,8 @@ cvtCF2Yr<-function(cfType,sim,length,ageDeath1,ageDeath2,value){
 calcCF<-function(sim,length,ageDeath1,ageDeath2){
     out<-numeric(length)
 
-    if (nPersons.sim(sim)>=1) yrsDeath1<-ageDeath1-sim$persons[[1]]$curAge+1
-    if (nPersons.sim(sim)>=2) yrsDeath2<-ageDeath2-sim$persons[[2]]$curAge+1
+    # if (nPersons.sim(sim)>=1) yrsDeath1<-ageDeath1-sim$persons[[1]]$curAge+1
+    # if (nPersons.sim(sim)>=2) yrsDeath2<-ageDeath2-sim$persons[[2]]$curAge+1
     for (i in 1:nCF.sim(sim)){
         cf<-sim$cf[i,]
         startyr<-cvtCF2Yr(cf$startType,sim,length,ageDeath1,ageDeath2,cf$start)
@@ -159,9 +158,11 @@ calcCF<-function(sim,length,ageDeath1,ageDeath2){
         endyr<-min(length,endyr)
         if (startyr>endyr) break
         if (cf$inflationAdj){
-            out[startyr:endyr]<-out[startyr:endyr]+ifelse(tolower(cf$type)=="c",1,-1)*cf$amount*(1+sim$inflation)^(startyr:endyr)
+            out[startyr:endyr] <- out[startyr:endyr] +
+                ifelse(tolower(cf$type)=="c",1,-1) * cf$amount * (1+sim$inflation)^(startyr:endyr)
         } else {
-            out[startyr:endyr]<-out[startyr:endyr]+ifelse(tolower(cf$type)=="c",1,-1)*cf$amount
+            out[startyr:endyr] <- out[startyr:endyr] +
+                ifelse(tolower(cf$type)=="c",1,-1) * cf$amount
         }
     }
     return(out)
@@ -179,10 +180,10 @@ calcCF<-function(sim,length,ageDeath1,ageDeath2){
 #' @param t Time in years
 #' @param seed Random seed
 #'
-#' @return value Random returns in decimal format
+#' @return Random returns in decimal format
 #' @export
 #'
-#' @examples AA_Rand(10,.08,.12,1)
+#' @examples calcRandReturns(10,.08,.12,1)
 #'
 calcRandReturns<-function(n,r,sd,t,seed=NA){
     if (!is.na(seed)) {
@@ -192,7 +193,7 @@ calcRandReturns<-function(n,r,sd,t,seed=NA){
     vSD <- sd
     vLNSD <- sqrt(log(1 + (vSD / vMean) ^ 2)) # var
     vLNER <- log(vMean) - vLNSD ^ 2 / 2
-    dblRnd<-runif(n)
-    return(exp(qnorm(dblRnd, vLNER * t, vLNSD * sqrt(t)) / t) - 1)
+    dblRnd<-stats::runif(n)
+    return(exp(stats::qnorm(dblRnd, vLNER * t, vLNSD * sqrt(t)) / t) - 1)
 }
 

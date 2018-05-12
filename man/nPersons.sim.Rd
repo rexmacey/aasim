@@ -7,7 +7,7 @@
 nPersons.sim(sim)
 }
 \arguments{
-\item{sim}{}
+\item{sim}{Simulation object}
 }
 \value{
 Number of persons in object

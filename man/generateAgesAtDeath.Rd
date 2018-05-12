@@ -9,11 +9,11 @@ generateAgesAtDeath(curAge, gender, n = 1, mort.factor = 1)
 \arguments{
 \item{curAge}{Current age of individual.  Assumes just turned this age.}
 
-\item{gender}{'Male' or 'Female}
+\item{gender}{'Male' or 'Female'}
 
 \item{n}{Number of ages to generate}
 
-\item{mortality.factor}{A value multiplied by each mortality value. Higher than 1 shortens lifespan}
+\item{mort.factor}{A value multiplied by each mortality value. Higher than 1 shortens lifespan}
 }
 \value{
 Vector of ages at death

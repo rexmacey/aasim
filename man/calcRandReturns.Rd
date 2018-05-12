@@ -18,7 +18,7 @@ calcRandReturns(n, r, sd, t, seed = NA)
 \item{seed}{Random seed}
 }
 \value{
-value Random returns in decimal format
+Random returns in decimal format
 }
 \description{
 Returns n lognormally distributed random variables with a mean of r and a
@@ -26,6 +26,6 @@ standard deviation of sd.  Periods over 1 year are annualized.  Specify
 inputs in decimal formats (e.g. 8%=0.08 not 8).
 }
 \examples{
-AA_Rand(10,.08,.12,1)
+calcRandReturns(10,.08,.12,1)
 
 }

@@ -7,7 +7,7 @@
 nCF.sim(sim)
 }
 \arguments{
-\item{sim}{}
+\item{sim}{Simulation object}
 }
 \value{
 Number of cash flows in object

@@ -39,5 +39,7 @@ List with values describing simulation
 Intialize a Simulation
 }
 \examples{
-sim1<-initializeSimulation("Sim1 Test", nTrials=500,1000000,lengthType="R", length=0, seed=-101,inflation=0,ror=0.10,stdDev=.08,targetValue=.Machine$double.eps,targetValueIsReal=FALSE)
+initializeSimulation("Sim1 Test", nTrials=500, 1000000, lengthType="R",
+length=0, seed=-101, inflation=0, ror=0.10, stdDev=.08,
+targetValue=.Machine$double.eps, targetValueIsReal=FALSE)
 }

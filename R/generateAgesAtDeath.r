@@ -4,9 +4,9 @@
 #' will return the life expectancy.
 #'
 #' @param curAge Current age of individual.  Assumes just turned this age.
-#' @param gender 'Male' or 'Female
+#' @param gender 'Male' or 'Female'
 #' @param n Number of ages to generate
-#' @param mortality.factor A value multiplied by each mortality value. Higher than 1 shortens lifespan
+#' @param mort.factor A value multiplied by each mortality value. Higher than 1 shortens lifespan
 #'
 #' @return Vector of ages at death
 #'
@@ -16,7 +16,7 @@ generateAgesAtDeath <- function(curAge, gender, n = 1, mort.factor=1.0) {
     maxAge <- mortality[nrow(mortality), "age"]
     out <- integer(n)
     if (curAge < 0)
-        curage <- 0
+        curAge <- 0
     if (curAge > maxAge) {
         out[1:n] <- maxAge
         return(out)

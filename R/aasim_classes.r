@@ -16,28 +16,38 @@
 #' @return List with values describing simulation
 #' @export
 #'
-#' @examples sim1<-initializeSimulation("Sim1 Test", nTrials=500,1000000,lengthType="R", length=0, seed=-101,inflation=0,ror=0.10,stdDev=.08,targetValue=.Machine$double.eps,targetValueIsReal=FALSE)
-initializeSim<-function(description, nTrials,startValue, lengthType, length=10,
-                        seed, inflation=0, ror,stdDev,
-                        targetValue=.Machine$double.eps,
-                        targetValueIsReal=TRUE){
-    sim<-list()
-    sim[["description"]]<-description
-    sim[["nTrials"]]<-nTrials
-    sim[["startValue"]]<-startValue
-    sim[["lengthType"]]<-lengthType
-    sim[["length"]]<-length
-    sim[["seed"]]<-seed
-    sim[["inflation"]]<-inflation
-    sim[["ror"]]<-ror
-    sim[["stdDev"]]<-stdDev
-    sim[["targetValue"]]<-targetValue
-    sim[["targetValueIsReal"]]<-targetValueIsReal
-    sim[["cf"]]<-initializeCF()
-    sim[["persons"]]<-list()
-    class(sim)<-"sim"
-    return(sim)
-}
+#' @examples initializeSimulation("Sim1 Test", nTrials=500, 1000000, lengthType="R",
+#' length=0, seed=-101, inflation=0, ror=0.10, stdDev=.08,
+#' targetValue=.Machine$double.eps, targetValueIsReal=FALSE)
+initializeSim <-
+    function(description,
+             nTrials,
+             startValue,
+             lengthType,
+             length = 10,
+             seed,
+             inflation = 0,
+             ror,
+             stdDev,
+             targetValue = .Machine$double.eps,
+             targetValueIsReal = TRUE) {
+        sim <- list()
+        sim[["description"]] <- description
+        sim[["nTrials"]] <- nTrials
+        sim[["startValue"]] <- startValue
+        sim[["lengthType"]] <- lengthType
+        sim[["length"]] <- length
+        sim[["seed"]] <- seed
+        sim[["inflation"]] <- inflation
+        sim[["ror"]] <- ror
+        sim[["stdDev"]] <- stdDev
+        sim[["targetValue"]] <- targetValue
+        sim[["targetValueIsReal"]] <- targetValueIsReal
+        sim[["cf"]] <- initializeCF()
+        sim[["persons"]] <- list()
+        class(sim) <- "sim"
+        return(sim)
+    }
 
 #' Add Person to persons list in a simulation
 #'
@@ -68,7 +78,7 @@ addPerson.sim<-function(sim,name,initials, curAge,gender,retireAge,mort.factor=1
 
 #' Number of persons in a sim(ulation) object
 #'
-#' @param sim
+#' @param sim Simulation object
 #'
 #' @return Number of persons in object
 #' @export
@@ -80,7 +90,7 @@ nPersons.sim<-function(sim){
 
 #' Number of cash flows in a sim(ulation) object
 #'
-#' @param sim
+#' @param sim Simulation object
 #'
 #' @return Number of cash flows in object
 #' @export
@@ -146,7 +156,7 @@ validateCFType<-function(strCF){
 #' @return A data frame with the cash flows of the simulation and the added cash flow
 #' @export
 #'
-#' @examples sim1$cf<-addCF(sim1$cf,"Retirement Expense","p1ret",0,"p1death",0,"w",40000,TRUE)
+#' @examples addCF(sim1$cf,"Retirement Expense","p1ret",0,"p1death",0,"w",40000,TRUE)
 addCF<-function(simCF,description,startType,start,endType,end,type,amount,inflationAdj){
     new.df<-data.frame(
         description=description, # description of cash flow
