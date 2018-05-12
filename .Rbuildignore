@@ -1,7 +1,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^\./r/testSim\.r$
 ^\./r/testClasses\.r$
 ^testClasses\.r$
-^testSim\.r$
 ^siminput\.xlsx$
