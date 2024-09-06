@@ -4,13 +4,15 @@
 \name{mortality}
 \alias{mortality}
 \title{Mortality table}
-\format{A data frame with 120 rows and 3 variables:
+\format{
+A data frame with 120 rows and 3 variables:
 \describe{
   \item{age}{age of death for which probability is calculated}
   \item{male}{probability of death for a male in decimal}
   \item{female}{probability of death for a female in decimal}
   ...
-}}
+}
+}
 \source{
 Society of Actuaries
 }

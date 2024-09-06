@@ -3,10 +3,10 @@
 #' @param description Description of simulation
 #' @param nTrials number of trials
 #' @param startValue Starting dollar value
-#' @param lengthType 'R' for random, or 'F' for fixed. If nnumber of persons is 0, then F is assumed.
+#' @param lengthType 'R' for random, or 'F' for fixed. If number of persons is 0, then F is assumed.
 #' @param length Length for fixed type of simulations in years
 #' @param seed Seed for random number generator
-#' @param inflation Inflation rate in decimal
+#' @param defaultInflation Inflation rate in decimal
 #' @param ror Rate of Return in decimal
 #' @param stdDev Standard Deviation in decimal
 #' @param targetValue Dollar value used to determine if a trial is a success
@@ -17,7 +17,7 @@
 #' @export
 #'
 #' @examples \dontrun{initializeSimulation("Sim1 Test", nTrials=500, 1000000, lengthType="R",
-#' length=0, seed=-101, inflation=0, ror=0.10, stdDev=.08,
+#' length=0, seed=-101, defaultInflation=0, ror=0.10, stdDev=.08,
 #' targetValue=.Machine$double.eps, targetValueIsReal=FALSE)}
 initializeSim <-
     function(description,
@@ -26,7 +26,7 @@ initializeSim <-
              lengthType,
              length = 10,
              seed,
-             inflation = 0,
+             defaultInflation = 0,
              ror,
              stdDev,
              targetValue = .Machine$double.eps,
@@ -38,7 +38,7 @@ initializeSim <-
         sim[["lengthType"]] <- lengthType
         sim[["length"]] <- length
         sim[["seed"]] <- seed
-        sim[["inflation"]] <- inflation
+        sim[["defaultInflation"]] <- defaultInflation
         sim[["ror"]] <- ror
         sim[["stdDev"]] <- stdDev
         sim[["targetValue"]] <- targetValue
@@ -58,22 +58,31 @@ initializeSim <-
 #' @param gender 'M' or 'Male' or 'F' or 'Female'
 #' @param retireAge Retirement age.
 #' @param mort.factor Mortality factor, default = 1.  This is multiplied by each mortality rate. Values >1 decrease life expectancy.
+#' @param mort.adj.years Mortality adjustment, default = 0.  This value is added to each generated age at death.
 #'
 #' @return sim object with person added to simulation
 #' @export
 #'
-#' @examples \dontrun{sim1<-addPerson.sim(sim, name, initials, curAge, gender, retireAge, mort.factor)}
-#' \dontrun{sim1<-addPerson.sim(sim1,"Rex Macey","RM",56,"M",65,1.0)}
-addPerson.sim<-function(sim,name,initials, curAge,gender,retireAge,mort.factor=1.0){
+#' @examples \dontrun{sim1<-addPerson.sim(sim, name, initials, curAge, gender, retireAge, mort.factor, mort.adj.years)}
+#' \dontrun{sim1<-addPerson.sim(sim1,"Rex Macey","RM",56,"M",65,1.0, 0.0)}
+addPerson.sim <- function(sim,
+                          name,
+                          initials,
+                          curAge,
+                          gender,
+                          retireAge,
+                          mort.factor = 1.0,
+                          mort.adj.years = 0.0) {
     # npersons <- length(sim$persons)
-    p<-list()
-    p[["name"]]<-name
-    p[["initials"]]<-initials
-    p[["curAge"]]<-curAge
-    p[["gender"]]<-gender
-    p[["retireAge"]]<-retireAge
-    p[["mort.factor"]]<-mort.factor
-    sim[["persons"]][[length(sim[["persons"]])+1]] <- p
+    p <- list()
+    p[["name"]] <- name
+    p[["initials"]] <- initials
+    p[["curAge"]] <- curAge
+    p[["gender"]] <- gender
+    p[["retireAge"]] <- retireAge
+    p[["mort.factor"]] <- mort.factor
+    p[["mort.adj.years"]] <- mort.adj.years
+    sim[["persons"]][[length(sim[["persons"]]) + 1]] <- p
     return(sim)
 }
 
@@ -85,7 +94,7 @@ addPerson.sim<-function(sim,name,initials, curAge,gender,retireAge,mort.factor=1
 #' @export
 #'
 #' @examples \dontrun{nPersons.sim(sim1)}
-nPersons.sim<-function(sim){
+nPersons.sim <- function(sim) {
     return(length(sim$persons))
 }
 
@@ -97,7 +106,7 @@ nPersons.sim<-function(sim){
 #' @export
 #'
 #' @examples \dontrun{nCF.sim(sim1)}
-nCF.sim<-function(sim){
+nCF.sim <- function(sim){
     return(nrow(sim$cf))
 }
 
@@ -106,16 +115,18 @@ nCF.sim<-function(sim){
 #' @return Data frame with no rows but columns for cash flows
 #'
 #' @examples \dontrun{initializeCF()}
-initializeCF<-function(){
-    cf.df<-data.frame(
-        description=character(), # description of cash flow
-        startType=character(),
-        start=integer(),
-        endType=character(),
-        end=integer(),
-        type=character(),
-        amount=double(),
-        inflationAdj=logical()
+initializeCF <- function() {
+    cf.df <- data.frame(
+        description = character(),
+        # description of cash flow
+        startType = character(),
+        start = integer(),
+        endType = character(),
+        end = integer(),
+        type = character(),
+        amount = double(),
+        defaultInflationAdj = logical(),
+        inflation = double()
     )
     return(cf.df)
 }
@@ -128,9 +139,14 @@ initializeCF<-function(){
 #' @export
 #'
 #' @examples \dontrun{validateCFType("p1age")}
-validateCFType<-function(strCF){
-    validStrings<-unlist(strsplit("yr,start,end,p1age,p1ret,p1death,p2age,p2ret,p2death,1stdeath,2nddeath",","))
-    strCF.lower<-tolower(strCF)
+validateCFType <- function(strCF) {
+    validStrings <- unlist(
+        strsplit(
+            "yr,start,end,p1age,p1ret,p1death,p2age,p2ret,p2death,1stdeath,2nddeath",
+            ","
+        )
+    )
+    strCF.lower <- tolower(strCF)
     return(strCF.lower %in% validStrings)
 }
 
@@ -138,11 +154,11 @@ validateCFType<-function(strCF){
 #'
 #' Here are the types that describe when a cash flow starts or ends: yr
 #' indicates a numeric value will be supplied such as 1 to start year one and 10
-#' to end year 10. p1age, p2age is the age of person1 or person 2 p1ret, p2ret
-#' is the retirement age of person1 or person 2 p1death, p2death is the age at
-#' death  of person1 or person 2 1stdeath, 2nddeath is the death of the 1st to
-#' die, or the 2nd to die start is first year (equivalent to startType=='yr' and
-#' specifying 1 for the start) end is last year
+#' to end year 10. p1age, p2age is the age of person1 or person 2; p1ret, p2ret
+#' is the retirement age of person1 or person 2; p1death, p2death is the age at
+#' death  of person1 or person 2; 1stdeath, 2nddeath is the death of the 1st to
+#' die, or the 2nd to die; start is first year (equivalent to startType=='yr' and
+#' specifying 1 for the start); end is last year
 #'
 #' @param simCF The data frame to which to add a cash flow
 #' @param description Description of cash flow
@@ -152,13 +168,14 @@ validateCFType<-function(strCF){
 #' @param end numeric value representing endType='yr' or 'p1age
 #' @param type either 'c' for contribution or 'w' for withdrawal
 #' @param amount dollar amount of cash flow
-#' @param inflationAdj logical to indicate whether cash flow is to be adjusted for inflation.
+#' @param defaultInflationAdj logical to indicate whether cash flow is to be adjusted using the default inflation.
+#' @param inflation numeric value representing inflation rate to use if the default rate is not used.
 #'
 #' @return A data frame with the cash flows of the simulation and the added cash flow
 #' @export
 #'
 #' @examples \dontrun{simCF <- addCF(simCF, description, startType, start,
-#'                    endType, end, type, amount, inflationAdj)}
+#'                    endType, end, type, amount, defaultInflationAdj)}
 #' \dontrun{simCF <- addCF(simCF, "Retirement Expense", "p1ret", 0,
 #'                    "p1death", 0, "w", 40000, TRUE)}
 addCF <-
@@ -170,7 +187,8 @@ addCF <-
              end,
              type,
              amount,
-             inflationAdj) {
+             defaultInflationAdj,
+             inflation) {
         new.df <- data.frame(description = description,
             startType = startType,
             start = start,
@@ -178,7 +196,8 @@ addCF <-
             end = end,
             type = type,
             amount = amount,
-            inflationAdj = inflationAdj)
+            defaultInflationAdj = defaultInflationAdj,
+            inflation = inflation)
         simCF <- rbind(simCF, new.df)
         return(simCF)
     }

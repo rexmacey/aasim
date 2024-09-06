@@ -4,7 +4,16 @@
 \alias{addPerson.sim}
 \title{Add Person to persons list in a simulation}
 \usage{
-addPerson.sim(sim, name, initials, curAge, gender, retireAge, mort.factor = 1)
+addPerson.sim(
+  sim,
+  name,
+  initials,
+  curAge,
+  gender,
+  retireAge,
+  mort.factor = 1,
+  mort.adj.years = 0
+)
 }
 \arguments{
 \item{sim}{Object of type sim (simulation)}
@@ -20,6 +29,8 @@ addPerson.sim(sim, name, initials, curAge, gender, retireAge, mort.factor = 1)
 \item{retireAge}{Retirement age.}
 
 \item{mort.factor}{Mortality factor, default = 1.  This is multiplied by each mortality rate. Values >1 decrease life expectancy.}
+
+\item{mort.adj.years}{Mortality adjustment, default = 0.  This value is added to each generated age at death.}
 }
 \value{
 sim object with person added to simulation
@@ -28,6 +39,6 @@ sim object with person added to simulation
 Add Person to persons list in a simulation
 }
 \examples{
-\dontrun{sim1<-addPerson.sim(sim, name, initials, curAge, gender, retireAge, mort.factor)}
-\dontrun{sim1<-addPerson.sim(sim1,"Rex Macey","RM",56,"M",65,1.0)}
+\dontrun{sim1<-addPerson.sim(sim, name, initials, curAge, gender, retireAge, mort.factor, mort.adj.years)}
+\dontrun{sim1<-addPerson.sim(sim1,"Rex Macey","RM",56,"M",65,1.0, 0.0)}
 }

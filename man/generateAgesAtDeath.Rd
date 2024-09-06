@@ -4,7 +4,14 @@
 \alias{generateAgesAtDeath}
 \title{Generate Ages at Death}
 \usage{
-generateAgesAtDeath(curAge, gender, n = 1, mort.factor = 1)
+generateAgesAtDeath(
+  curAge,
+  gender,
+  n = 1,
+  mort.factor = 1,
+  adj.years = 0,
+  randomize.order = TRUE
+)
 }
 \arguments{
 \item{curAge}{Current age of individual.  Assumes just turned this age.}
@@ -14,13 +21,19 @@ generateAgesAtDeath(curAge, gender, n = 1, mort.factor = 1)
 \item{n}{Number of ages to generate}
 
 \item{mort.factor}{A value multiplied by each mortality value. Higher than 1 shortens lifespan}
+
+\item{adj.years}{adjustment in years to age of death.}
+
+\item{randomize.order}{Randomize the order if TRUE, else sorted in ascending order}
 }
 \value{
 Vector of ages at death
 }
 \description{
 This function generates ages at death depending on a mortality table. If n=1, the function
-will return the life expectancy.
+will return the median survival age.  All mortality rates are multiplied by the mortality factor so
+a value of 1 has no effect.  adj.years is added to the calculated ages at death. This is a simple way
+to add or subtract years to the lifespans of individuals.  The age will not be reduced below the current age.
 }
 \examples{
  \dontrun{generateAgesAtDeath(51, "Male", 10, 1.0)}

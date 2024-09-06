@@ -4,9 +4,19 @@
 \alias{initializeSim}
 \title{Intialize a Simulation}
 \usage{
-initializeSim(description, nTrials, startValue, lengthType, length = 10, seed,
-  inflation = 0, ror, stdDev, targetValue = .Machine$double.eps,
-  targetValueIsReal = TRUE)
+initializeSim(
+  description,
+  nTrials,
+  startValue,
+  lengthType,
+  length = 10,
+  seed,
+  defaultInflation = 0,
+  ror,
+  stdDev,
+  targetValue = .Machine$double.eps,
+  targetValueIsReal = TRUE
+)
 }
 \arguments{
 \item{description}{Description of simulation}
@@ -15,13 +25,13 @@ initializeSim(description, nTrials, startValue, lengthType, length = 10, seed,
 
 \item{startValue}{Starting dollar value}
 
-\item{lengthType}{'R' for random, or 'F' for fixed. If nnumber of persons is 0, then F is assumed.}
+\item{lengthType}{'R' for random, or 'F' for fixed. If number of persons is 0, then F is assumed.}
 
 \item{length}{Length for fixed type of simulations in years}
 
 \item{seed}{Seed for random number generator}
 
-\item{inflation}{Inflation rate in decimal}
+\item{defaultInflation}{Inflation rate in decimal}
 
 \item{ror}{Rate of Return in decimal}
 
@@ -40,6 +50,6 @@ Intialize a Simulation
 }
 \examples{
 \dontrun{initializeSimulation("Sim1 Test", nTrials=500, 1000000, lengthType="R",
-length=0, seed=-101, inflation=0, ror=0.10, stdDev=.08,
+length=0, seed=-101, defaultInflation=0, ror=0.10, stdDev=.08,
 targetValue=.Machine$double.eps, targetValueIsReal=FALSE)}
 }

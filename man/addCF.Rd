@@ -4,8 +4,18 @@
 \alias{addCF}
 \title{Add a Cash Flow record to the Cash Flow data frame}
 \usage{
-addCF(simCF, description, startType, start, endType, end, type, amount,
-  inflationAdj)
+addCF(
+  simCF,
+  description,
+  startType,
+  start,
+  endType,
+  end,
+  type,
+  amount,
+  defaultInflationAdj,
+  inflation
+)
 }
 \arguments{
 \item{simCF}{The data frame to which to add a cash flow}
@@ -24,7 +34,9 @@ addCF(simCF, description, startType, start, endType, end, type, amount,
 
 \item{amount}{dollar amount of cash flow}
 
-\item{inflationAdj}{logical to indicate whether cash flow is to be adjusted for inflation.}
+\item{defaultInflationAdj}{logical to indicate whether cash flow is to be adjusted using the default inflation.}
+
+\item{inflation}{numeric value representing inflation rate to use if the default rate is not used.}
 }
 \value{
 A data frame with the cash flows of the simulation and the added cash flow
@@ -32,15 +44,15 @@ A data frame with the cash flows of the simulation and the added cash flow
 \description{
 Here are the types that describe when a cash flow starts or ends: yr
 indicates a numeric value will be supplied such as 1 to start year one and 10
-to end year 10. p1age, p2age is the age of person1 or person 2 p1ret, p2ret
-is the retirement age of person1 or person 2 p1death, p2death is the age at
-death  of person1 or person 2 1stdeath, 2nddeath is the death of the 1st to
-die, or the 2nd to die start is first year (equivalent to startType=='yr' and
-specifying 1 for the start) end is last year
+to end year 10. p1age, p2age is the age of person1 or person 2; p1ret, p2ret
+is the retirement age of person1 or person 2; p1death, p2death is the age at
+death  of person1 or person 2; 1stdeath, 2nddeath is the death of the 1st to
+die, or the 2nd to die; start is first year (equivalent to startType=='yr' and
+specifying 1 for the start); end is last year
 }
 \examples{
 \dontrun{simCF <- addCF(simCF, description, startType, start,
-                   endType, end, type, amount, inflationAdj)}
+                   endType, end, type, amount, defaultInflationAdj)}
 \dontrun{simCF <- addCF(simCF, "Retirement Expense", "p1ret", 0,
                    "p1death", 0, "w", 40000, TRUE)}
 }

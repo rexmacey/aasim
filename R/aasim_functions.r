@@ -12,28 +12,31 @@
 #' @export
 #'
 #' @examples \dontrun{simulate(sim)}
-simulate<-function(sim){
-    trials<-getHorizons.sim(sim)
-    portfolioValues<-list()
-    rateOfReturns<-list()
-    trials$cashFlows<-list()
-    for (iTrial in 1:sim$nTrials){
-        portfolioValues[[iTrial]]<-numeric(trials$lengths[iTrial]+1)
-        portfolioValues[[iTrial]][1]<-sim$startValue
-        cashflows<-calcCF(sim,trials$lengths[iTrial],trials$agesDeath1[iTrial],trials$agesDeath2[iTrial])
-        trials$cashFlows[[iTrial]]<-cashflows
-        randomReturns<-1+calcRandReturns(trials$lengths[iTrial],sim$ror,sim$stdDev,1)
-        rateOfReturns[[iTrial]]<-randomReturns
-        for (y in 1:trials$lengths[iTrial]){
-            portfolioValues[[iTrial]][y+1]<-portfolioValues[[iTrial]][y] * randomReturns[y] + cashflows[y]
-            if (portfolioValues[[iTrial]][y+1]<=0){
-                portfolioValues[[iTrial]][y+1]<-0
+simulate <- function(sim) {
+    trials <- getHorizons.sim(sim)
+    portfolioValues <- list()
+    rateOfReturns <- list()
+    trials$cashFlows <- list()
+    for (iTrial in 1:sim$nTrials) {
+        portfolioValues[[iTrial]] <- numeric(trials$lengths[iTrial] + 1)
+        portfolioValues[[iTrial]][1] <- sim$startValue
+        cashflows <- calcCF(sim,
+                            trials$lengths[iTrial],
+                            trials$agesDeath1[iTrial],
+                            trials$agesDeath2[iTrial])
+        trials$cashFlows[[iTrial]] <- cashflows
+        randomReturns <- 1 + calcRandReturns(trials$lengths[iTrial], sim$ror, sim$stdDev, 1)
+        rateOfReturns[[iTrial]] <- randomReturns
+        for (y in 1:trials$lengths[iTrial]) {
+            portfolioValues[[iTrial]][y + 1] <- portfolioValues[[iTrial]][y] * randomReturns[y] + cashflows[y]
+            if (portfolioValues[[iTrial]][y + 1] <= 0) {
+                portfolioValues[[iTrial]][y + 1] <- 0
                 break
             }
         }
     }
-    trials$portfolioValues<-portfolioValues
-    trials$rateOfReturns<-rateOfReturns
+    trials$portfolioValues <- portfolioValues
+    trials$rateOfReturns <- rateOfReturns
     return(trials)
 }
 
@@ -47,36 +50,53 @@ simulate<-function(sim){
 #' agesDeath2 are the ages at which the second person passes.
 #'
 #' @examples \dontrun{getHorizons(sim1)}
-getHorizons.sim<-function(sim){
+getHorizons.sim <- function(sim) {
     #source("generateAgesAtDeath.r")
-    out<-list()
-    out$lengths<-NA
-    out$agesDeath1<-NA
-    out$agesDeath2<-NA
-    if (toupper(substr(sim$lengthType,1,1)=="F")){  # used fixed length
-        out$lengths<-rep(sim$length,sim$nTrials)
+    out <- list()
+    out$lengths <- NA
+    out$agesDeath1 <- NA
+    out$agesDeath2 <- NA
+    if (toupper(substr(sim$lengthType, 1, 1) == "F")) {
+        # used fixed length
+        out$lengths <- rep(sim$length, sim$nTrials)
         return(out)
     }
-    if (nPersons.sim(sim)==0) {  # also use fixed length since there is no mortality info
-        out$lengths<-rep(sim$length,sim$nTrials)
+    if (nPersons.sim(sim) == 0) {
+        # also use fixed length since there is no mortality info
+        out$lengths <- rep(sim$length, sim$nTrials)
         return(out)
     }
     # Generate random ages of death using mortality info
-    out$agesDeath1<-generateAgesAtDeath(sim$persons[[1]]$curAge,
-                                    sim$persons[[1]]$gender,
-                                    sim$nTrials,
-                                    sim$persons[[1]]$mort.factor)
-    if (nPersons.sim(sim)==2){
-        out$agesDeath2<-generateAgesAtDeath(sim$persons[[2]]$curAge,
-                                        sim$persons[[2]]$gender,
-                                        sim$nTrials,
-                                        sim$persons[[2]]$mort.factor)
-        if (sim$nTrials>1){
-            out$agesDeath2<-sample(out$agesDeath2,sim$nTrials)    # randomly order 2nd deaths
-        }
-        out$lengths<- apply(cbind(out$agesDeath1-sim$persons[[1]]$curAge+1,out$agesDeath2-sim$persons[[2]]$curAge+1),1,max)
+    out$agesDeath1 <- generateAgesAtDeath(
+        sim$persons[[1]]$curAge,
+        sim$persons[[1]]$gender,
+        sim$nTrials,
+        sim$persons[[1]]$mort.factor,
+        sim$persons[[1]]$mort.adj.years,
+        TRUE
+    )
+    if (nPersons.sim(sim) == 2) {
+        out$agesDeath2 <- generateAgesAtDeath(
+            sim$persons[[2]]$curAge,
+            sim$persons[[2]]$gender,
+            sim$nTrials,
+            sim$persons[[2]]$mort.factor,
+            sim$persons[[2]]$mort.adj.years,
+            TRUE
+        )
+        # if (sim$nTrials > 1) {
+        #     out$agesDeath2 <- sample(out$agesDeath2, sim$nTrials)    # randomly order 2nd deaths
+        # }
+        out$lengths <- apply(
+            cbind(
+                out$agesDeath1 - sim$persons[[1]]$curAge + 1,
+                out$agesDeath2 - sim$persons[[2]]$curAge + 1
+            ),
+            1,
+            max
+        )
     } else {
-        out$lengths<- out$agesDeath1-sim$persons[[1]]$curAge+1
+        out$lengths <- out$agesDeath1 - sim$persons[[1]]$curAge + 1
     }
     return(out)
 }
@@ -95,39 +115,53 @@ getHorizons.sim<-function(sim){
 #' @return integer representing year in which cash flow starts or ends
 #'
 #' @examples  \dontrun{cvtCF2Yr(cf$startType,sim,length,ageDeath1,ageDeath2,cf$start)}
-cvtCF2Yr<-function(cfType,sim,length,ageDeath1,ageDeath2,value){
-    if (nPersons.sim(sim)==0){
-        yr<-switch(tolower(cfType),
-                   yr = value,
-                   start = 1,
-                   end = length)
+cvtCF2Yr <- function(cfType,
+                     sim,
+                     length,
+                     ageDeath1,
+                     ageDeath2,
+                     value) {
+    if (nPersons.sim(sim) == 0) {
+        yr <- switch(
+            tolower(cfType),
+            yr = value,
+            start = 1,
+            end = length
+        )
     }
-    if (nPersons.sim(sim)==1){
-        yrsDeath1<-ageDeath1-sim$persons[[1]]$curAge+1
-        yr<-switch(tolower(cfType),
-                   yr = value,
-                   start = 1,
-                   end = length,
-                   p1age = value-sim$persons[[1]]$curAge+1,
-                   p1ret = sim$persons[[1]]$retireAge-sim$persons[[1]]$curAge+1,
-                   p1death = ageDeath1-sim$persons[[1]]$curAge+1,
-                   '1stdeath' = yrsDeath1)
+    if (nPersons.sim(sim) == 1) {
+        yrsDeath1 <- ageDeath1 - sim$persons[[1]]$curAge + 1
+        yr <- switch(
+            tolower(cfType),
+            yr = value,
+            start = 1,
+            end = length,
+            p1age = value - sim$persons[[1]]$curAge + 1,
+            p1ret = sim$persons[[1]]$retireAge - sim$persons[[1]]$curAge +
+                1,
+            p1death = ageDeath1 - sim$persons[[1]]$curAge + 1,
+            '1stdeath' = yrsDeath1
+        )
     }
-    if (nPersons.sim(sim)>=2){
-        yrsDeath1<-ageDeath1-sim$persons[[1]]$curAge+1
-        yrsDeath2<-ageDeath2-sim$persons[[2]]$curAge+1
-        yr<-switch(tolower(cfType),
-                   yr = value,
-                   start = 1,
-                   end = length,
-                   p1age = value-sim$persons[[1]]$curAge+1,
-                   p1ret = sim$persons[[1]]$retireAge-sim$persons[[1]]$curAge+1,
-                   p1death = ageDeath1-sim$persons[[1]]$curAge+1,
-                   p2age = value-sim$persons[[2]]$curAge+1,
-                   p2ret = sim$persons[[2]]$retireAge-sim$persons[[2]]$curAge+1,
-                   p2death = ageDeath2-sim$persons[[2]]$curAge+1,
-                   '1stdeath' = min(yrsDeath1,yrsDeath2),
-                   '2nddeath' = max(yrsDeath1,yrsDeath2))
+    if (nPersons.sim(sim) >= 2) {
+        yrsDeath1 <- ageDeath1 - sim$persons[[1]]$curAge + 1
+        yrsDeath2 <- ageDeath2 - sim$persons[[2]]$curAge + 1
+        yr <- switch(
+            tolower(cfType),
+            yr = value,
+            start = 1,
+            end = length,
+            p1age = value - sim$persons[[1]]$curAge + 1,
+            p1ret = sim$persons[[1]]$retireAge - sim$persons[[1]]$curAge +
+                1,
+            p1death = ageDeath1 - sim$persons[[1]]$curAge + 1,
+            p2age = value - sim$persons[[2]]$curAge + 1,
+            p2ret = sim$persons[[2]]$retireAge - sim$persons[[2]]$curAge +
+                1,
+            p2death = ageDeath2 - sim$persons[[2]]$curAge + 1,
+            '1stdeath' = min(yrsDeath1, yrsDeath2),
+            '2nddeath' = max(yrsDeath1, yrsDeath2)
+        )
     }
     return(yr)
 }
@@ -145,25 +179,31 @@ cvtCF2Yr<-function(cfType,sim,length,ageDeath1,ageDeath2,value){
 #' @return vector of cash flows for a single trial
 #'
 #' @examples \dontrun{calcCF(sim,10,82,91)}
-calcCF<-function(sim,length,ageDeath1,ageDeath2){
-    out<-numeric(length)
+calcCF <- function(sim, length, ageDeath1, ageDeath2) {
+    out <- numeric(length)
 
     # if (nPersons.sim(sim)>=1) yrsDeath1<-ageDeath1-sim$persons[[1]]$curAge+1
     # if (nPersons.sim(sim)>=2) yrsDeath2<-ageDeath2-sim$persons[[2]]$curAge+1
-    for (i in 1:nCF.sim(sim)){
-        cf<-sim$cf[i,]
-        startyr<-cvtCF2Yr(cf$startType,sim,length,ageDeath1,ageDeath2,cf$start)
-        startyr<-max(1,startyr)
-        endyr<-cvtCF2Yr(cf$endType,sim,length,ageDeath1,ageDeath2,cf$end)
-        endyr<-min(length,endyr)
-        if (startyr>endyr) break
-        if (cf$inflationAdj){
-            out[startyr:endyr] <- out[startyr:endyr] +
-                ifelse(tolower(cf$type)=="c",1,-1) * cf$amount * (1+sim$inflation)^(startyr:endyr)
+    for (i in 1:nCF.sim(sim)) {
+        cf <- sim$cf[i, ]
+        startyr <- cvtCF2Yr(cf$startType,
+                            sim,
+                            length,
+                            ageDeath1,
+                            ageDeath2,
+                            cf$start)
+        startyr <- max(1, startyr)
+        endyr <- cvtCF2Yr(cf$endType, sim, length, ageDeath1, ageDeath2, cf$end)
+        endyr <- min(length, endyr)
+        if (cf$defaultInflationAdj) {
+            inflationRate <- sim$defaultInflation
         } else {
-            out[startyr:endyr] <- out[startyr:endyr] +
-                ifelse(tolower(cf$type)=="c",1,-1) * cf$amount
+            inflationRate <- cf$inflation
         }
+        if (startyr > endyr)
+            break
+        out[startyr:endyr] <- out[startyr:endyr] +
+            ifelse(tolower(cf$type) == "c", 1, -1) * cf$amount * (1 + inflationRate) ^ (startyr:endyr)
     }
     return(out)
 }
@@ -185,7 +225,7 @@ calcCF<-function(sim,length,ageDeath1,ageDeath2){
 #'
 #' @examples calcRandReturns(10,.08,.12,1)
 #'
-calcRandReturns<-function(n,r,sd,t,seed=NA){
+calcRandReturns <- function(n,r,sd,t,seed=NA){
     if (!is.na(seed)) {
         set.seed(seed)
     }
@@ -193,7 +233,7 @@ calcRandReturns<-function(n,r,sd,t,seed=NA){
     vSD <- sd
     vLNSD <- sqrt(log(1 + (vSD / vMean) ^ 2)) # var
     vLNER <- log(vMean) - vLNSD ^ 2 / 2
-    dblRnd<-stats::runif(n)
+    dblRnd <- stats::runif(n)
     return(exp(stats::qnorm(dblRnd, vLNER * t, vLNSD * sqrt(t)) / t) - 1)
 }
 
