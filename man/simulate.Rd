@@ -4,10 +4,13 @@
 \alias{simulate}
 \title{Runs a simulation on a simulation object}
 \usage{
-simulate(sim)
+simulate(sim, asOfDate = Sys.Date())
 }
 \arguments{
 \item{sim}{sim(ulation) object}
+
+\item{asOfDate}{Date to run simulation as of. Used for calculating ages.
+default is system date.   May be character YYYY-MM-DD or date.}
 }
 \value{
 A list with 6 items.

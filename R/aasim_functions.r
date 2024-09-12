@@ -1,6 +1,8 @@
 #' Runs a simulation on a simulation object
 #'
 #' @param sim sim(ulation) object
+#' @param asOfDate Date to run simulation as of. Used for calculating ages.
+#' default is system date.   May be character YYYY-MM-DD or date.
 #'
 #' @return A list with 6 items.
 #'   lengths is a vector containing the number of years of each trial.
@@ -12,41 +14,45 @@
 #' @export
 #'
 #' @examples \dontrun{simulate(sim)}
-simulate <- function(sim) {
-    trials <- getHorizons.sim(sim)
-    portfolioValues <- list()
-    rateOfReturns <- list()
-    trials$cashFlows <- list()
+simulate <- function(sim, asOfDate = Sys.Date()) {
+    set.seed(sim$seed)
+    if (typeof(asOfDate) == "character") asOfDate <- as.Date(asOfDate)
+    sim <- calcAgesForSimulation(sim, asOfDate)
+    out <- getHorizons.sim(sim)
+    out$portfolioValues <- list()
+    out$rateOfReturns <- list()
+    out$cashFlows <- list()
     for (iTrial in 1:sim$nTrials) {
-        portfolioValues[[iTrial]] <- numeric(trials$lengths[iTrial] + 1)
-        portfolioValues[[iTrial]][1] <- sim$startValue
-        cashflows <- calcCF(sim,
-                            trials$lengths[iTrial],
-                            trials$agesDeath1[iTrial],
-                            trials$agesDeath2[iTrial])
-        trials$cashFlows[[iTrial]] <- cashflows
-        randomReturns <- 1 + calcRandReturns(trials$lengths[iTrial], sim$ror, sim$stdDev, 1)
-        rateOfReturns[[iTrial]] <- randomReturns
-        for (y in 1:trials$lengths[iTrial]) {
-            portfolioValues[[iTrial]][y + 1] <- portfolioValues[[iTrial]][y] * randomReturns[y] + cashflows[y]
-            if (portfolioValues[[iTrial]][y + 1] <= 0) {
-                portfolioValues[[iTrial]][y + 1] <- 0
+
+        out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
+        out$cashFlows[[iTrial]] <- calcCF(sim,
+                            out$lengths[iTrial],
+                            out$agesDeath1[iTrial],
+                            out$agesDeath2[iTrial])
+        out$portfolioValues[[iTrial]][1] <- sim$startValue + out$cashFlows[[iTrial]][1]
+        out$rateOfReturns[[iTrial]] <- 1 + calcRandReturns(out$lengths[iTrial], sim$ror, sim$stdDev, 1)
+        if (out$lengths[iTrial] < 1) next
+        for (i in 2:(out$lengths[iTrial] + 1)) {
+            out$portfolioValues[[iTrial]][i] <- out$portfolioValues[[iTrial]][i - 1] * out$rateOfReturns[[iTrial]][i - 1] + out$cashFlows[[iTrial]][i]
+            if (out$portfolioValues[[iTrial]][i] <= 0) {
+                out$portfolioValues[[iTrial]][i] <- 0
                 break
             }
         }
     }
-    trials$portfolioValues <- portfolioValues
-    trials$rateOfReturns <- rateOfReturns
-    return(trials)
+    out$runDate <- Sys.Date()
+    return(out)
 }
 
 #' Get Time Horizons
 #'
-#' This will return the lengths of each trial
+#' This will return the lengths of the cash flow and portfolio values vectors.
+#' Each of the vectors is 1 longer than the number of years in a trial because
+#' the first element represents the start (year 0).
 #'
 #' @param sim Sim(ulation) object
 #'
-#' @return List with three vectors. lengths is number of years in each trial; agesDeath1 are the ages at which the first person passes,
+#' @return List with three vectors. lengths is number of years + 1 in each trial; agesDeath1 are the ages at which the first person passes,
 #' agesDeath2 are the ages at which the second person passes.
 #'
 #' @examples \dontrun{getHorizons(sim1)}
@@ -89,19 +95,23 @@ getHorizons.sim <- function(sim) {
         # }
         out$lengths <- apply(
             cbind(
-                out$agesDeath1 - sim$persons[[1]]$curAge + 1,
-                out$agesDeath2 - sim$persons[[2]]$curAge + 1
+                out$agesDeath1 - sim$persons[[1]]$curAge,
+                out$agesDeath2 - sim$persons[[2]]$curAge
             ),
             1,
             max
         )
     } else {
-        out$lengths <- out$agesDeath1 - sim$persons[[1]]$curAge + 1
+        out$lengths <- out$agesDeath1 - sim$persons[[1]]$curAge
     }
     return(out)
 }
 
 #' Convert a Cash Flow Type to a Year
+#'
+#' This returns the index value for the cash flow vector.  The first element
+#' of the vector represents year 0 - the inception (now).  And index value of
+#' 2 represents year 1 and so on.
 #'
 #' cfType must be in "yr,start,end,p1age,p1ret,p1death,p2age,p2ret,p2death,1stdeath,2nddeath"
 #'
@@ -124,21 +134,22 @@ cvtCF2Yr <- function(cfType,
     if (nPersons.sim(sim) == 0) {
         yr <- switch(
             tolower(cfType),
-            yr = value,
-            start = 1,
-            end = length
+            yr = value + 1,
+            start = 1, # 1 is year 0, 2 is year 1
+            end = length + 1
         )
     }
     if (nPersons.sim(sim) == 1) {
         yrsDeath1 <- ageDeath1 - sim$persons[[1]]$curAge + 1
         yr <- switch(
             tolower(cfType),
-            yr = value,
+            yr = value + 1,
             start = 1,
-            end = length,
+            end = length + 1,
             p1age = value - sim$persons[[1]]$curAge + 1,
             p1ret = sim$persons[[1]]$retireAge - sim$persons[[1]]$curAge +
                 1,
+            "p1ret-1" = sim$persons[[1]]$retireAge - sim$persons[[1]]$curAge,
             p1death = ageDeath1 - sim$persons[[1]]$curAge + 1,
             '1stdeath' = yrsDeath1
         )
@@ -148,16 +159,18 @@ cvtCF2Yr <- function(cfType,
         yrsDeath2 <- ageDeath2 - sim$persons[[2]]$curAge + 1
         yr <- switch(
             tolower(cfType),
-            yr = value,
+            yr = value + 1,
             start = 1,
-            end = length,
+            end = length + 1,
             p1age = value - sim$persons[[1]]$curAge + 1,
             p1ret = sim$persons[[1]]$retireAge - sim$persons[[1]]$curAge +
                 1,
+            "p1ret-1" = sim$persons[[1]]$retireAge - sim$persons[[1]]$curAge,
             p1death = ageDeath1 - sim$persons[[1]]$curAge + 1,
             p2age = value - sim$persons[[2]]$curAge + 1,
             p2ret = sim$persons[[2]]$retireAge - sim$persons[[2]]$curAge +
                 1,
+            "p2ret-1" = sim$persons[[2]]$retireAge - sim$persons[[2]]$curAge,
             p2death = ageDeath2 - sim$persons[[2]]$curAge + 1,
             '1stdeath' = min(yrsDeath1, yrsDeath2),
             '2nddeath' = max(yrsDeath1, yrsDeath2)
@@ -180,31 +193,50 @@ cvtCF2Yr <- function(cfType,
 #'
 #' @examples \dontrun{calcCF(sim,10,82,91)}
 calcCF <- function(sim, length, ageDeath1, ageDeath2) {
-    out <- numeric(length)
-
+    out <- numeric(length + 1)
     # if (nPersons.sim(sim)>=1) yrsDeath1<-ageDeath1-sim$persons[[1]]$curAge+1
     # if (nPersons.sim(sim)>=2) yrsDeath2<-ageDeath2-sim$persons[[2]]$curAge+1
     for (i in 1:nCF.sim(sim)) {
         cf <- sim$cf[i, ]
-        startyr <- cvtCF2Yr(cf$startType,
-                            sim,
-                            length,
-                            ageDeath1,
-                            ageDeath2,
-                            cf$start)
-        startyr <- max(1, startyr)
-        endyr <- cvtCF2Yr(cf$endType, sim, length, ageDeath1, ageDeath2, cf$end)
-        endyr <- min(length, endyr)
-        if (cf$defaultInflationAdj) {
-            inflationRate <- sim$defaultInflation
-        } else {
-            inflationRate <- cf$inflation
-        }
-        if (startyr > endyr)
-            break
-        out[startyr:endyr] <- out[startyr:endyr] +
-            ifelse(tolower(cf$type) == "c", 1, -1) * cf$amount * (1 + inflationRate) ^ (startyr:endyr)
+        out <- out + calcCFSub(cf, sim, length, ageDeath1, ageDeath2)
     }
+    return(out)
+}
+
+#' Calculate A Cash Flow Vector
+#'
+#' This takes a single cash flow description and creates a numeric vector.
+#' These vectors can be combined to create a net flow for each trial.
+#'
+#' @param cf description of a cash flow.
+#' @param sim sim(ulation) object
+#' @param length The number of years in that trial.
+#' @param ageDeath1 age of death of person 1 if applicable
+#' @param ageDeath2 age of death of person 2 if applicable
+#'
+#' @return vector of cash flows
+#'
+#' @examples \dontrun{calcCF(sim,10,82,91)}
+calcCFSub <- function(cf, sim, length, ageDeath1, ageDeath2) {
+    out <- numeric(length + 1)
+    startyr <- cvtCF2Yr(cf$startType,
+                        sim,
+                        length,
+                        ageDeath1,
+                        ageDeath2,
+                        cf$start)
+    startyr <- pmax(startyr, 1)
+    endyr <- cvtCF2Yr(cf$endType, sim, length, ageDeath1, ageDeath2, cf$end)
+    endyr <- pmin(endyr, length + 1)
+    if (endyr <= 0) return(out)
+    if (startyr > endyr) return(out)
+    if (startyr > (length + 1)) return(out)
+    if (cf$defaultInflationAdj) {
+        inflationRate <- sim$defaultInflation
+    } else {
+        inflationRate <- cf$inflation
+    }
+    out[startyr:endyr] <- ifelse(tolower(cf$type) == "c", 1, -1) * cf$amount * (1 + inflationRate) ^ ((startyr - 1):(endyr - 1))
     return(out)
 }
 
@@ -223,9 +255,9 @@ calcCF <- function(sim, length, ageDeath1, ageDeath2) {
 #' @return Random returns in decimal format
 #' @export
 #'
-#' @examples calcRandReturns(10,.08,.12,1)
+#' @examples \dontrun{calcRandReturns(10,.08,.12,1)}
 #'
-calcRandReturns <- function(n,r,sd,t,seed=NA){
+calcRandReturns <- function(n, r, sd, t, seed=NA){
     if (!is.na(seed)) {
         set.seed(seed)
     }
@@ -236,4 +268,24 @@ calcRandReturns <- function(n,r,sd,t,seed=NA){
     dblRnd <- stats::runif(n)
     return(exp(stats::qnorm(dblRnd, vLNER * t, vLNSD * sqrt(t)) / t) - 1)
 }
+
+#' Calculates ages of persons in Sim
+#'
+#' @param sim sim(ulation) object
+#' @param asOfDate Date to run simulation as of. Used for calculating ages.
+#' default is system date.   May be character YYYY-MM-DD or date.
+#'
+#' @return sim If there are persons, a curAge is added to each person
+#' @export
+#'
+#' @examples \dontrun{calcAgesForSimulation(sim)}
+calcAgesForSimulation <- function(sim, asOfDate = Sys.Date()) {
+    if (nPersons.sim(sim) == 0) return(sim)
+    for (i in 1:nPersons.sim(sim)) {
+        sim$persons[[i]]$curAge <- calculate_age_nearest_birthday(sim$person[[i]]$birthDate, asOfDate)
+    }
+    return(sim)
+}
+
+
 

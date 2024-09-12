@@ -26,6 +26,6 @@ standard deviation of sd.  Periods over 1 year are annualized.  Specify
 inputs in decimal formats (e.g. 8%=0.08 not 8).
 }
 \examples{
-calcRandReturns(10,.08,.12,1)
+\dontrun{calcRandReturns(10,.08,.12,1)}
 
 }

@@ -23,6 +23,11 @@ cvtCF2Yr(cfType, sim, length, ageDeath1, ageDeath2, value)
 integer representing year in which cash flow starts or ends
 }
 \description{
+This returns the index value for the cash flow vector.  The first element
+of the vector represents year 0 - the inception (now).  And index value of
+2 represents year 1 and so on.
+}
+\details{
 cfType must be in "yr,start,end,p1age,p1ret,p1death,p2age,p2ret,p2death,1stdeath,2nddeath"
 }
 \examples{

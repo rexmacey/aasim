@@ -3,3 +3,5 @@
 ^\./r/testClasses\.r$
 ^testClasses\.r$
 ^siminput\.xlsx$
+^\./r/sandbox\.r$
+^tests/sandbox\.r$

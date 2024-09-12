@@ -8,7 +8,7 @@ addPerson.sim(
   sim,
   name,
   initials,
-  curAge,
+  birthDate,
   gender,
   retireAge,
   mort.factor = 1,
@@ -22,7 +22,7 @@ addPerson.sim(
 
 \item{initials}{Initials or short name, useful for display}
 
-\item{curAge}{Current age (simulation assumes person just turned this age)}
+\item{birthDate}{Birth date to determine current age, format YYYY-MM-DD.}
 
 \item{gender}{'M' or 'Male' or 'F' or 'Female'}
 
@@ -39,6 +39,7 @@ sim object with person added to simulation
 Add Person to persons list in a simulation
 }
 \examples{
-\dontrun{sim1<-addPerson.sim(sim, name, initials, curAge, gender, retireAge, mort.factor, mort.adj.years)}
+\dontrun{sim1 <- addPerson.sim(sim, name, initials, birthDate, gender,
+retireAge, mort.factor, mort.adj.years)}
 \dontrun{sim1<-addPerson.sim(sim1,"Rex Macey","RM",56,"M",65,1.0, 0.0)}
 }

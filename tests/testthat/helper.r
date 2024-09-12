@@ -1,18 +1,29 @@
 library(readxl)
-library(aasim)
+# library(aasim)
 
-simulatefromexcel <- function(xlsxfilename){
-    xl <- read_excel(xlsxfilename)
-    xlcf <- read_excel(xlsxfilename, sheet = 2)
-    out <- lapply(xl$description,
-                  simulateexcelsub,
-                  xl = xl,
-                  xlcf = xlcf)
+readExcelSimData <- function(xlsxfilename) {
+    out <- list()
+    out$xl <- read_excel(xlsxfilename)
+    out$xlcf <- read_excel(xlsxfilename, sheet = 2)
     return(out)
 }
-simulateexcelsub <- function(simDescription, xl, xlcf){
+
+simulatefromexcel <- function(xlsxfilename, asOfDate){
+    xlInputs <- readExcelSimData(xlsxfilename = xlsxfilename)
+    out <- lapply(xlInputs$xl$description,
+                  simulateexcelsub,
+                  xl = xlInputs$xl,
+                  xlcf = xlInputs$xlcf,
+                  asOfDate)
+    names(out) <- xlInputs$xl$description
+    return(out)
+}
+
+# set up for the simulation. do not run
+# ready to step through simulate after this.
+setupSimulation <- function(simDescription, xl, xlcf){
     simInput <- xl[xl$description == simDescription, ]
-    sim1 <- initializeSim(
+    out <- initializeSim(
         description = simInput$description,
         nTrials = simInput$nTrials,
         startValue = simInput$startValue,
@@ -26,11 +37,11 @@ simulateexcelsub <- function(simDescription, xl, xlcf){
         targetValueIsReal = simInput$targetValueIsReal
     )
     if (!is.na(simInput$p1name)) {
-        sim1 <- addPerson.sim(
-            sim1,
+        out <- addPerson.sim(
+            out,
             simInput$p1name,
             simInput$p1init,
-            simInput$p1age,
+            simInput$p1birthdate,
             simInput$p1gender,
             simInput$p1retage,
             simInput$p1mortfactor,
@@ -40,11 +51,11 @@ simulateexcelsub <- function(simDescription, xl, xlcf){
 
     if (!is.na(simInput$p2name)) {
 
-        sim1 <- addPerson.sim(
-            sim1,
+        out <- addPerson.sim(
+            out,
             simInput$p2name,
             simInput$p2init,
-            simInput$p2age,
+            simInput$p2birthdate,
             simInput$p2gender,
             simInput$p2retage,
             simInput$p2mortfactor,
@@ -54,8 +65,8 @@ simulateexcelsub <- function(simDescription, xl, xlcf){
     cfInput <- xlcf[xlcf$simulation == simDescription, ]
 
     for (i in 1:nrow(cfInput)) {
-        sim1$cf <- addCF(
-            simCF = sim1$cf,
+        out$cf <- addCF(
+            simCF = out$cf,
             description = cfInput$description[i],
             startType = cfInput$starttype[i],
             start = cfInput$start[i],
@@ -67,10 +78,13 @@ simulateexcelsub <- function(simDescription, xl, xlcf){
             inflation = cfInput$inflation[i]
         )
     }
-    sim1$simulation <- simulate(sim1)
-    return(sim1)
+    return(out)
 }
 
-results <- simulatefromexcel("siminput.xlsx")
+simulateexcelsub <- function(simDescription, xl, xlcf, asOfDate){
+    sim <- setupSimulation(simDescription, xl, xlcf)
+    sim$simulation <- aasim::simulate(sim, asOfDate)
+    return(sim)
+}
 
-tmp <- sapply(results$simulation$portfolioValues, function(x) x[length(x)])
+simTest <- simulatefromexcel(paste0(testthat::test_path(),"/data/siminput.xlsx"), as.Date("2024-09-12"))

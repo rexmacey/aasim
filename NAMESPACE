@@ -2,7 +2,12 @@
 
 export(addCF)
 export(addPerson.sim)
+export(calcAgesForSimulation)
 export(calcRandReturns)
+export(calculate_age)
+export(calculate_age_nearest_birthday)
+export(days_since_last_birthday)
+export(days_until_next_birthday)
 export(generateAgesAtDeath)
 export(initializeSim)
 export(nCF.sim)

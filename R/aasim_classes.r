@@ -16,7 +16,7 @@
 #' @return List with values describing simulation
 #' @export
 #'
-#' @examples \dontrun{initializeSimulation("Sim1 Test", nTrials=500, 1000000, lengthType="R",
+#' @examples \dontrun{initializeSim("Sim1 Test", nTrials=500, 1000000, lengthType="R",
 #' length=0, seed=-101, defaultInflation=0, ror=0.10, stdDev=.08,
 #' targetValue=.Machine$double.eps, targetValueIsReal=FALSE)}
 initializeSim <-
@@ -54,7 +54,7 @@ initializeSim <-
 #' @param sim Object of type sim (simulation)
 #' @param name Name of person
 #' @param initials Initials or short name, useful for display
-#' @param curAge Current age (simulation assumes person just turned this age)
+#' @param birthDate Birth date to determine current age, format YYYY-MM-DD.
 #' @param gender 'M' or 'Male' or 'F' or 'Female'
 #' @param retireAge Retirement age.
 #' @param mort.factor Mortality factor, default = 1.  This is multiplied by each mortality rate. Values >1 decrease life expectancy.
@@ -63,12 +63,13 @@ initializeSim <-
 #' @return sim object with person added to simulation
 #' @export
 #'
-#' @examples \dontrun{sim1<-addPerson.sim(sim, name, initials, curAge, gender, retireAge, mort.factor, mort.adj.years)}
+#' @examples \dontrun{sim1 <- addPerson.sim(sim, name, initials, birthDate, gender,
+#' retireAge, mort.factor, mort.adj.years)}
 #' \dontrun{sim1<-addPerson.sim(sim1,"Rex Macey","RM",56,"M",65,1.0, 0.0)}
 addPerson.sim <- function(sim,
                           name,
                           initials,
-                          curAge,
+                          birthDate,
                           gender,
                           retireAge,
                           mort.factor = 1.0,
@@ -77,7 +78,7 @@ addPerson.sim <- function(sim,
     p <- list()
     p[["name"]] <- name
     p[["initials"]] <- initials
-    p[["curAge"]] <- curAge
+    p[["birthDate"]] <- birthDate
     p[["gender"]] <- gender
     p[["retireAge"]] <- retireAge
     p[["mort.factor"]] <- mort.factor
@@ -142,7 +143,7 @@ initializeCF <- function() {
 validateCFType <- function(strCF) {
     validStrings <- unlist(
         strsplit(
-            "yr,start,end,p1age,p1ret,p1death,p2age,p2ret,p2death,1stdeath,2nddeath",
+            "yr,start,end,p1age,p1ret,p1ret-1,p1death,p2age,p2ret,p2ret-1,p2death,1stdeath,2nddeath",
             ","
         )
     )

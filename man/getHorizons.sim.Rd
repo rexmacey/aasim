@@ -10,11 +10,13 @@ getHorizons.sim(sim)
 \item{sim}{Sim(ulation) object}
 }
 \value{
-List with three vectors. lengths is number of years in each trial; agesDeath1 are the ages at which the first person passes,
+List with three vectors. lengths is number of years + 1 in each trial; agesDeath1 are the ages at which the first person passes,
 agesDeath2 are the ages at which the second person passes.
 }
 \description{
-This will return the lengths of each trial
+This will return the lengths of the cash flow and portfolio values vectors.
+Each of the vectors is 1 longer than the number of years in a trial because
+the first element represents the start (year 0).
 }
 \examples{
 \dontrun{getHorizons(sim1)}
