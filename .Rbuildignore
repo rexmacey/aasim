@@ -5,3 +5,5 @@
 ^siminput\.xlsx$
 ^\./r/sandbox\.r$
 ^tests/sandbox\.r$
+^data-raw$
+^\./r/data\.r$

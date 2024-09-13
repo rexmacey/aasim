@@ -1,4 +1,4 @@
-source("helper.r")
+# source("helper.r")
 
 test_that("calcRandReturns", {
     rndReturns <- calcRandReturns(10, 0.08, 0, 1, 101)

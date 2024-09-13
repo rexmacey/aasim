@@ -3,6 +3,8 @@
 #' @param sim sim(ulation) object
 #' @param asOfDate Date to run simulation as of. Used for calculating ages.
 #' default is system date.   May be character YYYY-MM-DD or date.
+#' @param randReturnType Method used to generate random returns. Either "S" for
+#' statistical or "H" for historical.
 #'
 #' @return A list with 6 items.
 #'   lengths is a vector containing the number of years of each trial.
@@ -13,15 +15,18 @@
 #'   ratesOfReturns is a list each item is a vector of 1 + the annual rate of return
 #' @export
 #'
-#' @examples \dontrun{simulate(sim)}
-simulate <- function(sim, asOfDate = Sys.Date()) {
+#' @examples \dontrun{simulateStatistical(sim)}
+simulateStatistical <- function(sim, asOfDate = Sys.Date(), randReturnType = "S") {
     set.seed(sim$seed)
     if (typeof(asOfDate) == "character") asOfDate <- as.Date(asOfDate)
+    allowed_values <- c("S", "H") # required so nConsecMonths can produce 12 months
+    randReturnType <- match.arg(toupper(as.character(randReturnType)), choices = as.character(allowed_values))
     sim <- calcAgesForSimulation(sim, asOfDate)
     out <- getHorizons.sim(sim)
     out$portfolioValues <- list()
     out$rateOfReturns <- list()
     out$cashFlows <- list()
+    out$randReturnType <- randReturnType
     for (iTrial in 1:sim$nTrials) {
 
         out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
@@ -30,7 +35,11 @@ simulate <- function(sim, asOfDate = Sys.Date()) {
                             out$agesDeath1[iTrial],
                             out$agesDeath2[iTrial])
         out$portfolioValues[[iTrial]][1] <- sim$startValue + out$cashFlows[[iTrial]][1]
-        out$rateOfReturns[[iTrial]] <- 1 + calcRandReturns(out$lengths[iTrial], sim$ror, sim$stdDev, 1)
+        if (randReturnType == "S") {
+            out$rateOfReturns[[iTrial]] <- 1 + calcRandReturns(out$lengths[iTrial], sim$ror, sim$stdDev, 1)
+        } else {
+            calcRandHistReturns(out$lengths[iTrial], sim$stockWt, sim$nConsecMonths, sim$retAdj, sim$minDate, sim$maxDate)
+        }
         if (out$lengths[iTrial] < 1) next
         for (i in 2:(out$lengths[iTrial] + 1)) {
             out$portfolioValues[[iTrial]][i] <- out$portfolioValues[[iTrial]][i - 1] * out$rateOfReturns[[iTrial]][i - 1] + out$cashFlows[[iTrial]][i]
@@ -286,6 +295,4 @@ calcAgesForSimulation <- function(sim, asOfDate = Sys.Date()) {
     }
     return(sim)
 }
-
-
 

@@ -12,8 +12,15 @@
 #' @param targetValue Dollar value used to determine if a trial is a success
 #' @param targetValueIsReal Logical to indicate if target value should be
 #'   adjusted for inflation. Default is TRUE.
+#' @param stockWt The allocation to stocks, in decimal, used to generate historical random returns.
+#' @param nConsecMonths Number of consecutive months, 1, 2, 3, 4, 6, or 12 used to generate historical random returns.
+#' @param retAdj A value to add to each randomly generated annual historic return in decimal.
+#' @param minDate MinDate Earliest date to use when generating historical random returns.
+#' @param maxDate MaxDate Latest date to use when generating historical random returns.
+#' @param asOfDate Date to run the simulation as of. Used when calculating ages.
 #'
 #' @return List with values describing simulation
+#' @seealso [calcRandHistReturns()]
 #' @export
 #'
 #' @examples \dontrun{initializeSim("Sim1 Test", nTrials=500, 1000000, lengthType="R",
@@ -30,7 +37,13 @@ initializeSim <-
              ror,
              stdDev,
              targetValue = .Machine$double.eps,
-             targetValueIsReal = TRUE) {
+             targetValueIsReal = TRUE,
+             stockWt = 0.6,
+             nConsecMonths = 12,
+             retAdj = 0,
+             minDate = min(sbi$Month),
+             maxDate = max(sbi$Month),
+             asOfDate = Sys.Date()) {
         sim <- list()
         sim[["description"]] <- description
         sim[["nTrials"]] <- nTrials
@@ -43,6 +56,12 @@ initializeSim <-
         sim[["stdDev"]] <- stdDev
         sim[["targetValue"]] <- targetValue
         sim[["targetValueIsReal"]] <- targetValueIsReal
+        sim[["stockWt"]] <- stockWt
+        sim[["nConsecMonths"]] <- nConsecMonths
+        sim[["retAdj"]] <- retAdj
+        sim[["minDate"]] <- minDate
+        sim[["maxDate"]] <- maxDate
+        sim[["asOfDate"]] <- asOfDate
         sim[["cf"]] <- initializeCF()
         sim[["persons"]] <- list()
         class(sim) <- "sim"

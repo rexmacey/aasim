@@ -1,10 +1,7 @@
-library(readxl)
-# library(aasim)
-
 readExcelSimData <- function(xlsxfilename) {
     out <- list()
-    out$xl <- read_excel(xlsxfilename)
-    out$xlcf <- read_excel(xlsxfilename, sheet = 2)
+    out$xl <- readxl::read_excel(xlsxfilename)
+    out$xlcf <- readxl::read_excel(xlsxfilename, sheet = 2)
     return(out)
 }
 
@@ -83,7 +80,7 @@ setupSimulation <- function(simDescription, xl, xlcf){
 
 simulateexcelsub <- function(simDescription, xl, xlcf, asOfDate){
     sim <- setupSimulation(simDescription, xl, xlcf)
-    sim$simulation <- aasim::simulate(sim, asOfDate)
+    sim$simulation <- simulateStatistical(sim, asOfDate)
     return(sim)
 }
 

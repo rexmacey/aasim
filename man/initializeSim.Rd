@@ -15,7 +15,13 @@ initializeSim(
   ror,
   stdDev,
   targetValue = .Machine$double.eps,
-  targetValueIsReal = TRUE
+  targetValueIsReal = TRUE,
+  stockWt = 0.6,
+  nConsecMonths = 12,
+  retAdj = 0,
+  minDate = min(sbi$Month),
+  maxDate = max(sbi$Month),
+  asOfDate = Sys.Date()
 )
 }
 \arguments{
@@ -41,6 +47,18 @@ initializeSim(
 
 \item{targetValueIsReal}{Logical to indicate if target value should be
 adjusted for inflation. Default is TRUE.}
+
+\item{stockWt}{The allocation to stocks, in decimal, used to generate historical random returns.}
+
+\item{nConsecMonths}{Number of consecutive months, 1, 2, 3, 4, 6, or 12 used to generate historical random returns.}
+
+\item{retAdj}{A value to add to each randomly generated annual historic return in decimal.}
+
+\item{minDate}{MinDate Earliest date to use when generating historical random returns.}
+
+\item{maxDate}{MaxDate Latest date to use when generating historical random returns.}
+
+\item{asOfDate}{Date to run the simulation as of. Used when calculating ages.}
 }
 \value{
 List with values describing simulation
@@ -52,4 +70,7 @@ Intialize a Simulation
 \dontrun{initializeSim("Sim1 Test", nTrials=500, 1000000, lengthType="R",
 length=0, seed=-101, defaultInflation=0, ror=0.10, stdDev=.08,
 targetValue=.Machine$double.eps, targetValueIsReal=FALSE)}
+}
+\seealso{
+[calcRandHistReturns()]
 }

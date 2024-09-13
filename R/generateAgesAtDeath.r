@@ -18,7 +18,7 @@
 #' @examples  \dontrun{generateAgesAtDeath(51, "Male", 10, 1.0)}
 #'
 generateAgesAtDeath <- function(curAge, gender, n = 1, mort.factor = 1.0, adj.years = 0, randomize.order = TRUE) {
-    utils::data("mortality")
+    # utils::data("mortality")
     maxAge <- mortality[nrow(mortality), "age"]
     out <- integer(n)
     if (curAge < 0)
