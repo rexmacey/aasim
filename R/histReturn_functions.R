@@ -18,7 +18,6 @@ randHistSub <- function(sbiSub, stockWt, nConsecMonths = 12) {
     return(out)
 }
 
-
 #' Calculate Random Returns Using Historical Data
 #'
 #' Returns a blend of stock and bond returns. The stocks are weighted by
@@ -60,9 +59,22 @@ calcRandHistReturns <- function(n,
     allowed_values <- c(1, 2, 3, 4, 5, 6, 12) # required so nConsecMonths can produce 12 months
     nConsecMonths <- as.numeric(match.arg(as.character(nConsecMonths), choices = as.character(allowed_values)))
     sbiSub <- sbi[sbi$Month >= minDate & sbi$Month <= maxDate,]
+    if ((nrow(sbiSub) - nConsecMonths + 1) < 1)
+        stop(
+            paste(
+                "MinDate (",
+                minDate,
+                ") and MaxDate (",
+                maxDate,
+                ") must be such that there at least nConsecMonths (",
+                nConsecMonths,
+                ")."
+            )
+        )
     out <- as.data.frame(t(replicate(
-        n, randHistSub(sbiSub, stockWt, nConsecMonths))
+        n, randHistSub(sbiSub, stockWt, nConsecMonths)
     ))
+    )
 
     out$return <- out$return + retAdj
     return(out)

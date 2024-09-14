@@ -9,8 +9,8 @@
 #' @examples \dontrun{calculate_age("1950-01-01")}
 calculate_age <- function(birthdate, asOfDate = Sys.Date()) {
     # Convert the input birthdate to a Date object
-    if (typeof(birthdate) == "character") birthdate <- as.Date(birthdate)
-    if (typeof(asOfDate) == "character") asOfDate <- as.Date(asOfDate)
+    birthdate <- as.Date(birthdate)
+    asOfDate <- as.Date(asOfDate)
     # Get the current date
     current_date <- asOfDate
 
@@ -36,8 +36,8 @@ calculate_age <- function(birthdate, asOfDate = Sys.Date()) {
 #' @examples \dontrun{days_until_next_birthday("1950-01-01")}
 days_until_next_birthday <- function(birthdate, asOfDate = Sys.Date()) {
     # Convert the input birthdate to a Date object
-    if (typeof(birthdate) == "character") birthdate <- as.Date(birthdate)
-    if (typeof(asOfDate) == "character") asOfDate <- as.Date(asOfDate)
+    birthdate <- as.Date(birthdate)
+    asOfDate <- as.Date(asOfDate)
     # Get the current date
     current_date <- asOfDate
 
@@ -69,8 +69,8 @@ days_until_next_birthday <- function(birthdate, asOfDate = Sys.Date()) {
 #' @examples \dontrun{days_since_last_birthday("1950-01-01")}
 days_since_last_birthday <- function(birthdate, asOfDate = Sys.Date()) {
     # Convert the input birthdate to a Date object
-    if (typeof(birthdate) == "character") birthdate <- as.Date(birthdate)
-    if (typeof(asOfDate) == "character") asOfDate <- as.Date(asOfDate)
+    birthdate <- as.Date(birthdate)
+    asOfDate <- as.Date(asOfDate)
     # Get the current date
     current_date <- asOfDate
 

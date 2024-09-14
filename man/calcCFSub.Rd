@@ -4,7 +4,7 @@
 \alias{calcCFSub}
 \title{Calculate A Cash Flow Vector}
 \usage{
-calcCFSub(cf, sim, length, ageDeath1, ageDeath2)
+calcCFSub(cf, sim, length, ageDeath1, ageDeath2, histInflation = 0)
 }
 \arguments{
 \item{cf}{description of a cash flow.}
@@ -16,6 +16,9 @@ calcCFSub(cf, sim, length, ageDeath1, ageDeath2)
 \item{ageDeath1}{age of death of person 1 if applicable}
 
 \item{ageDeath2}{age of death of person 2 if applicable}
+
+\item{histInflation}{If historical inflation is to be used, this should be
+a vector of 1 + inflation rates with length length}
 }
 \value{
 vector of cash flows

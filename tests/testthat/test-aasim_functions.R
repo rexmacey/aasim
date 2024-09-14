@@ -12,7 +12,7 @@ test_that("calcCFSub", {
     #p1curage 64, p1ret 65, p1agedeath 86,
     #p2curage 61, p2ret 65, p2agedeath 88
     sim3 <- simTest$sim3
-    sim3 <- calcAgesForSimulation(sim3, asOfDate = sim3$simulation$runDate)
+    sim3 <- calcAgesForSimulation(sim3)
     cfMat <- t(sapply(1:10, function(x) calcCFSub(sim3$cf[x,], sim3, sim3$simulation$lengths[1], sim3$simulation$agesDeath1[1], sim3$simulation$agesDeath2[1])))
     expMat <- matrix(0, nrow = 10, ncol = 28)
     expMat[1, 3:5] <- 100 # yr 2 to 4

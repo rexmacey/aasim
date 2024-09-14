@@ -4,7 +4,7 @@
 \alias{calcCF}
 \title{Calculate Cash Flow Vector for a trial}
 \usage{
-calcCF(sim, length, ageDeath1, ageDeath2)
+calcCF(sim, length, ageDeath1, ageDeath2, histInflation = 0)
 }
 \arguments{
 \item{sim}{sim(ulation) object}
@@ -14,6 +14,9 @@ calcCF(sim, length, ageDeath1, ageDeath2)
 \item{ageDeath1}{age of death of person 1 if applicable}
 
 \item{ageDeath2}{age of death of person 2 if applicable}
+
+\item{histInflation}{If historical inflation is to be used, this should be
+a vector of 1 + inflation rates of length length}
 }
 \value{
 vector of cash flows for a single trial

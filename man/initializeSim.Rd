@@ -21,7 +21,9 @@ initializeSim(
   retAdj = 0,
   minDate = min(sbi$Month),
   maxDate = max(sbi$Month),
-  asOfDate = Sys.Date()
+  overrideInflation = TRUE,
+  asOfDate = Sys.Date(),
+  randReturnType = "S"
 )
 }
 \arguments{
@@ -58,7 +60,12 @@ adjusted for inflation. Default is TRUE.}
 
 \item{maxDate}{MaxDate Latest date to use when generating historical random returns.}
 
+\item{overrideInflation}{If TRUE, inflation inputs in cash flows will be overridden by
+the historical rates of inflation whenusing historical random returns.}
+
 \item{asOfDate}{Date to run the simulation as of. Used when calculating ages.}
+
+\item{randReturnType}{Either "S", the default, for statistical(random lognormal)or "H" for historical.}
 }
 \value{
 List with values describing simulation
@@ -72,5 +79,5 @@ length=0, seed=-101, defaultInflation=0, ror=0.10, stdDev=.08,
 targetValue=.Machine$double.eps, targetValueIsReal=FALSE)}
 }
 \seealso{
-[calcRandHistReturns()]
+[calcRandHistReturns()], [simulateRandom()]
 }

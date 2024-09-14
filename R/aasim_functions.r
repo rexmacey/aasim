@@ -1,10 +1,6 @@
 #' Runs a simulation on a simulation object
 #'
 #' @param sim sim(ulation) object
-#' @param asOfDate Date to run simulation as of. Used for calculating ages.
-#' default is system date.   May be character YYYY-MM-DD or date.
-#' @param randReturnType Method used to generate random returns. Either "S" for
-#' statistical or "H" for historical.
 #'
 #' @return A list with 6 items.
 #'   lengths is a vector containing the number of years of each trial.
@@ -15,31 +11,35 @@
 #'   ratesOfReturns is a list each item is a vector of 1 + the annual rate of return
 #' @export
 #'
-#' @examples \dontrun{simulateStatistical(sim)}
-simulateStatistical <- function(sim, asOfDate = Sys.Date(), randReturnType = "S") {
+#' @examples \dontrun{simulateRandom(sim)}
+simulateRandom <- function(sim) {
     set.seed(sim$seed)
-    if (typeof(asOfDate) == "character") asOfDate <- as.Date(asOfDate)
-    allowed_values <- c("S", "H") # required so nConsecMonths can produce 12 months
-    randReturnType <- match.arg(toupper(as.character(randReturnType)), choices = as.character(allowed_values))
-    sim <- calcAgesForSimulation(sim, asOfDate)
+    sim <- calcAgesForSimulation(sim)
     out <- getHorizons.sim(sim)
     out$portfolioValues <- list()
     out$rateOfReturns <- list()
+    out$inflationHist <- list()
     out$cashFlows <- list()
-    out$randReturnType <- randReturnType
     for (iTrial in 1:sim$nTrials) {
 
         out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
+        if (sim$randReturnType == "S") {
+            out$rateOfReturns[[iTrial]] <- 1 + calcRandReturns(out$lengths[iTrial], sim$ror, sim$stdDev, 1)
+            histInflation <- 0
+        } else {
+            temp <- calcRandHistReturns(out$lengths[iTrial], sim$stockWt, sim$nConsecMonths, sim$retAdj, sim$minDate, sim$maxDate)
+            out$rateOfReturns[[iTrial]] <- temp$return
+            out$inflationHist[[iTrial]] <- temp$inflation
+            histInflation <- out$inflationHist[[iTrial]]
+        }
+
         out$cashFlows[[iTrial]] <- calcCF(sim,
                             out$lengths[iTrial],
                             out$agesDeath1[iTrial],
-                            out$agesDeath2[iTrial])
+                            out$agesDeath2[iTrial],
+                            histInflation)
         out$portfolioValues[[iTrial]][1] <- sim$startValue + out$cashFlows[[iTrial]][1]
-        if (randReturnType == "S") {
-            out$rateOfReturns[[iTrial]] <- 1 + calcRandReturns(out$lengths[iTrial], sim$ror, sim$stdDev, 1)
-        } else {
-            calcRandHistReturns(out$lengths[iTrial], sim$stockWt, sim$nConsecMonths, sim$retAdj, sim$minDate, sim$maxDate)
-        }
+
         if (out$lengths[iTrial] < 1) next
         for (i in 2:(out$lengths[iTrial] + 1)) {
             out$portfolioValues[[iTrial]][i] <- out$portfolioValues[[iTrial]][i - 1] * out$rateOfReturns[[iTrial]][i - 1] + out$cashFlows[[iTrial]][i]
@@ -197,17 +197,21 @@ cvtCF2Yr <- function(cfType,
 #' @param length The number of years in that trial.
 #' @param ageDeath1 age of death of person 1 if applicable
 #' @param ageDeath2 age of death of person 2 if applicable
+#' @param histInflation If historical inflation is to be used, this should be
+#' a vector of 1 + inflation rates of length length
 #'
 #' @return vector of cash flows for a single trial
 #'
 #' @examples \dontrun{calcCF(sim,10,82,91)}
-calcCF <- function(sim, length, ageDeath1, ageDeath2) {
+calcCF <- function(sim, length, ageDeath1, ageDeath2, histInflation = 0) {
     out <- numeric(length + 1)
     # if (nPersons.sim(sim)>=1) yrsDeath1<-ageDeath1-sim$persons[[1]]$curAge+1
     # if (nPersons.sim(sim)>=2) yrsDeath2<-ageDeath2-sim$persons[[2]]$curAge+1
-    for (i in 1:nCF.sim(sim)) {
-        cf <- sim$cf[i, ]
-        out <- out + calcCFSub(cf, sim, length, ageDeath1, ageDeath2)
+    if (nCF.sim(sim) >= 1) {
+        for (i in 1:nCF.sim(sim)) {
+            cf <- sim$cf[i, ]
+            out <- out + calcCFSub(cf, sim, length, ageDeath1, ageDeath2, histInflation)
+        }
     }
     return(out)
 }
@@ -222,11 +226,13 @@ calcCF <- function(sim, length, ageDeath1, ageDeath2) {
 #' @param length The number of years in that trial.
 #' @param ageDeath1 age of death of person 1 if applicable
 #' @param ageDeath2 age of death of person 2 if applicable
+#' @param histInflation If historical inflation is to be used, this should be
+#' a vector of 1 + inflation rates with length length
 #'
 #' @return vector of cash flows
 #'
 #' @examples \dontrun{calcCF(sim,10,82,91)}
-calcCFSub <- function(cf, sim, length, ageDeath1, ageDeath2) {
+calcCFSub <- function(cf, sim, length, ageDeath1, ageDeath2, histInflation = 0) {
     out <- numeric(length + 1)
     startyr <- cvtCF2Yr(cf$startType,
                         sim,
@@ -240,12 +246,16 @@ calcCFSub <- function(cf, sim, length, ageDeath1, ageDeath2) {
     if (endyr <= 0) return(out)
     if (startyr > endyr) return(out)
     if (startyr > (length + 1)) return(out)
-    if (cf$defaultInflationAdj) {
-        inflationRate <- sim$defaultInflation
+    if (sim$randReturnType == "H" | sim$overrideInflation) {
+        inflationRates <- cumprod(histInflation)
     } else {
-        inflationRate <- cf$inflation
+        if (cf$defaultInflationAdj) {
+            inflationRates <- (1 + sim$defaultInflation) ^ ((startyr - 1):(endyr - 1))
+        } else {
+            inflationRates <- (1 + cf$inflation) ^ ((startyr - 1):(endyr - 1))
+        }
     }
-    out[startyr:endyr] <- ifelse(tolower(cf$type) == "c", 1, -1) * cf$amount * (1 + inflationRate) ^ ((startyr - 1):(endyr - 1))
+    out[startyr:endyr] <- ifelse(tolower(cf$type) == "c", 1, -1) * cf$amount * inflationRates
     return(out)
 }
 
@@ -281,17 +291,15 @@ calcRandReturns <- function(n, r, sd, t, seed=NA){
 #' Calculates ages of persons in Sim
 #'
 #' @param sim sim(ulation) object
-#' @param asOfDate Date to run simulation as of. Used for calculating ages.
-#' default is system date.   May be character YYYY-MM-DD or date.
 #'
 #' @return sim If there are persons, a curAge is added to each person
 #' @export
 #'
 #' @examples \dontrun{calcAgesForSimulation(sim)}
-calcAgesForSimulation <- function(sim, asOfDate = Sys.Date()) {
+calcAgesForSimulation <- function(sim) {
     if (nPersons.sim(sim) == 0) return(sim)
     for (i in 1:nPersons.sim(sim)) {
-        sim$persons[[i]]$curAge <- calculate_age_nearest_birthday(sim$person[[i]]$birthDate, asOfDate)
+        sim$persons[[i]]$curAge <- calculate_age_nearest_birthday(sim$person[[i]]$birthDate, sim$asOfDate)
     }
     return(sim)
 }

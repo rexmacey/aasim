@@ -4,13 +4,10 @@
 \alias{calcAgesForSimulation}
 \title{Calculates ages of persons in Sim}
 \usage{
-calcAgesForSimulation(sim, asOfDate = Sys.Date())
+calcAgesForSimulation(sim)
 }
 \arguments{
 \item{sim}{sim(ulation) object}
-
-\item{asOfDate}{Date to run simulation as of. Used for calculating ages.
-default is system date.   May be character YYYY-MM-DD or date.}
 }
 \value{
 sim If there are persons, a curAge is added to each person

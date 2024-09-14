@@ -17,10 +17,13 @@
 #' @param retAdj A value to add to each randomly generated annual historic return in decimal.
 #' @param minDate MinDate Earliest date to use when generating historical random returns.
 #' @param maxDate MaxDate Latest date to use when generating historical random returns.
+#' @param overrideInflation If TRUE, inflation inputs in cash flows will be overridden by
+#' the historical rates of inflation whenusing historical random returns.
 #' @param asOfDate Date to run the simulation as of. Used when calculating ages.
+#' @param randReturnType Either "S", the default, for statistical(random lognormal)or "H" for historical.
 #'
 #' @return List with values describing simulation
-#' @seealso [calcRandHistReturns()]
+#' @seealso [calcRandHistReturns()], [simulateRandom()]
 #' @export
 #'
 #' @examples \dontrun{initializeSim("Sim1 Test", nTrials=500, 1000000, lengthType="R",
@@ -43,7 +46,9 @@ initializeSim <-
              retAdj = 0,
              minDate = min(sbi$Month),
              maxDate = max(sbi$Month),
-             asOfDate = Sys.Date()) {
+             overrideInflation = TRUE,
+             asOfDate = Sys.Date(),
+             randReturnType = "S") {
         sim <- list()
         sim[["description"]] <- description
         sim[["nTrials"]] <- nTrials
@@ -61,7 +66,9 @@ initializeSim <-
         sim[["retAdj"]] <- retAdj
         sim[["minDate"]] <- minDate
         sim[["maxDate"]] <- maxDate
+        sim[["overrideInflation"]] <- overrideInflation
         sim[["asOfDate"]] <- asOfDate
+        sim[["randReturnType"]] <- randReturnType
         sim[["cf"]] <- initializeCF()
         sim[["persons"]] <- list()
         class(sim) <- "sim"
