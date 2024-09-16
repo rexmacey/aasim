@@ -13,6 +13,11 @@
 #'
 #' @examples \dontrun{simulateRandom(sim)}
 simulateRandom <- function(sim) {
+    sbiSub <- sbi[sbi$Month >= sim$minDate & sbi$Month <= sim$maxDate,]
+    if (sim$randReturnType == "C") {
+        sim$lengthType <- "F" # override lengthType is necessary.
+        sim$nTrials <- nrow(sbiSub) - sim$length * 12 + 1
+    }
     set.seed(sim$seed)
     sim <- calcAgesForSimulation(sim)
     out <- getHorizons.sim(sim)
@@ -21,16 +26,22 @@ simulateRandom <- function(sim) {
     out$inflationHist <- list()
     out$cashFlows <- list()
     for (iTrial in 1:sim$nTrials) {
-
         out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
         if (sim$randReturnType == "S") {
             out$rateOfReturns[[iTrial]] <- 1 + calcRandReturns(out$lengths[iTrial], sim$ror, sim$stdDev, 1)
             histInflation <- 0
-        } else {
-            temp <- calcRandHistReturns(out$lengths[iTrial], sim$stockWt, sim$nConsecMonths, sim$retAdj, sim$minDate, sim$maxDate)
+        } else if (sim$randReturnType == "H") {
+            temp <- calcRandHistReturns(out$lengths[iTrial], sim$stockWt, sim$nConsecMonths, sim$retAdj, sbiSub)
             out$rateOfReturns[[iTrial]] <- temp$return
             out$inflationHist[[iTrial]] <- temp$inflation
             histInflation <- out$inflationHist[[iTrial]]
+        } else if (sim$randReturnType == "C") {
+            temp <- calcChronologicalHist(iTrial, out$lengths[iTrial], sbiSub, sim$stockWt)
+            out$rateOfReturns[[iTrial]] <- temp$return
+            out$inflationHist[[iTrial]] <- temp$inflation
+            histInflation <- out$inflationHist[[iTrial]]
+        } else {
+            stop(paste("Invalid randReturnTYpe:", sim$randReturnType, "Should be S, H or C."))
         }
 
         out$cashFlows[[iTrial]] <- calcCF(sim,
@@ -303,4 +314,3 @@ calcAgesForSimulation <- function(sim) {
     }
     return(sim)
 }
-

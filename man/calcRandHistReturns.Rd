@@ -9,8 +9,7 @@ calcRandHistReturns(
   stockWt,
   nConsecMonths = 12,
   retAdj = 0,
-  minDate = min(sbi$Month),
-  maxDate = max(sbi$Month),
+  sbiSub,
   seed = NA
 )
 }
@@ -23,9 +22,7 @@ calcRandHistReturns(
 
 \item{retAdj}{An adjustment to the return (not inflation).  To reduce all returns by 1\%, enter 0.01.}
 
-\item{minDate}{Earliest historical date to use. Default is earliest in set.}
-
-\item{maxDate}{Latest historical date to use Default is most recent in set.}
+\item{sbiSub}{Subset of sbi table restricted by the min and max dates of the simulation}
 
 \item{seed}{Random seed}
 }

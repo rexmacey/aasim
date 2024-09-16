@@ -37,8 +37,7 @@ randHistSub <- function(sbiSub, stockWt, nConsecMonths = 12) {
 #' @param stockWt stockWt Weighting to stocks. Bonds will be 1 - StockWt.  Enter 60\% as 0.60.
 #' @param nConsecMonths Number of consecutive months.  Default is 12. Must be 1, 2, 3, 4, 6, or 12.
 #' @param retAdj An adjustment to the return (not inflation).  To reduce all returns by 1\%, enter 0.01.
-#' @param minDate Earliest historical date to use. Default is earliest in set.
-#' @param maxDate Latest historical date to use Default is most recent in set.
+#' @param sbiSub Subset of sbi table restricted by the min and max dates of the simulation
 #' @param seed Random seed
 #'
 #' @return n observations of two columns; return and inflation. These have 1 added to them so 4\% will return as 1.04.
@@ -49,8 +48,7 @@ calcRandHistReturns <- function(n,
                                 stockWt,
                                 nConsecMonths = 12,
                                 retAdj = 0,
-                                minDate = min(sbi$Month),
-                                maxDate = max(sbi$Month),
+                                sbiSub,
                                 seed = NA) {
     # utils::data("sbi") # stocks, bonds and inflation data by month
     if (!is.na(seed)) {
@@ -58,18 +56,12 @@ calcRandHistReturns <- function(n,
     }
     allowed_values <- c(1, 2, 3, 4, 5, 6, 12) # required so nConsecMonths can produce 12 months
     nConsecMonths <- as.numeric(match.arg(as.character(nConsecMonths), choices = as.character(allowed_values)))
-    sbiSub <- sbi[sbi$Month >= minDate & sbi$Month <= maxDate,]
+
     if ((nrow(sbiSub) - nConsecMonths + 1) < 1)
         stop(
-            paste(
-                "MinDate (",
-                minDate,
-                ") and MaxDate (",
-                maxDate,
-                ") must be such that there at least nConsecMonths (",
-                nConsecMonths,
-                ")."
-            )
+            paste0("(nrow(sbiSub) - nConsecMonths + 1) < 1 is TRUE.
+                   nrow(sbiSub)=", nrow(sbiSub),
+                   "nConsecMonths=", nConsecMonths)
         )
     out <- as.data.frame(t(replicate(
         n, randHistSub(sbiSub, stockWt, nConsecMonths)
@@ -82,7 +74,7 @@ calcRandHistReturns <- function(n,
 
 #' Get Historical Return Stats
 #'
-#' @param stockWt stockWt Weighting to stocks. Bonds will be 1 - StockWt.  Enter 60\% as 0.60.
+#' @param stockWt Weighting to stocks. Bonds will be 1 - StockWt.  Enter 60\% as 0.60.
 #' @param minDate Earliest historical date to use. Default is earliest in set.
 #' @param maxDate Latest historical date to use Default is most recent in set.
 #'
@@ -110,3 +102,26 @@ getHistoricalReturnStats <- function(stockWt, minDate = min(sbi$Month),
     return(c(out, out1))
 }
 
+#' Calculate Chronological History
+#'
+#' Generates sequential returns and inflation rates using the sbi table.
+#' It will start with the startIdx element of sbiSub and generate n annual
+#' returns using consecutive months.
+#'
+#' @param startIdx Starting index
+#' @param n Number of years to generate returns and inflation.
+#' @param sbiSub A subset of the sbi table limited by sim$minDate and sim$maxDate.
+#' @param stockWt Weighting to stocks. Bonds will be 1 - StockWt.  Enter 60\% as 0.60.
+#'
+#' @return data frame with n rows and two columns; return and inflation. These have 1 added to them so 4\% will return as 1.04.
+#' @export
+#'
+#' @examples \dontrun{calcChronologicalHist(1, 10, sbiSub, 0.6)}
+calcChronologicalHist <- function(startIdx, n, sbiSub, stockWt) {
+    endIdx <- startIdx + n * 12 - 1
+    out <- data.frame(
+        return = sapply(seq(startIdx, endIdx, 12), function(x) prod(sbiSub$Stocks[x:(x + 11)] * stockWt +
+                                                                        sbiSub$Bonds[x:(x + 11)] * (1 - stockWt) + 1)),
+        inflation = sapply(seq(startIdx, endIdx, 12), function(x) prod(1 + sbiSub$Inflation[x:(x + 11)])))
+    return(out)
+}

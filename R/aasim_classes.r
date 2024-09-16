@@ -68,7 +68,7 @@ initializeSim <-
         sim[["maxDate"]] <- maxDate
         sim[["overrideInflation"]] <- overrideInflation
         sim[["asOfDate"]] <- asOfDate
-        sim[["randReturnType"]] <- randReturnType
+        sim[["randReturnType"]] <- toupper(randReturnType)
         sim[["cf"]] <- initializeCF()
         sim[["persons"]] <- list()
         class(sim) <- "sim"

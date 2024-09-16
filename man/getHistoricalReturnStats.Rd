@@ -11,7 +11,7 @@ getHistoricalReturnStats(
 )
 }
 \arguments{
-\item{stockWt}{stockWt Weighting to stocks. Bonds will be 1 - StockWt.  Enter 60\% as 0.60.}
+\item{stockWt}{Weighting to stocks. Bonds will be 1 - StockWt.  Enter 60\% as 0.60.}
 
 \item{minDate}{Earliest historical date to use. Default is earliest in set.}
 
