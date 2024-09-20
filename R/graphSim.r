@@ -20,7 +20,7 @@ chartSuccessDonut <- function(sim) {
 
   # Calculate the percentage
   data <- data %>%
-      mutate(percentage = count / sum(count) * 100)
+      dplyr::mutate(percentage = count / sum(count) * 100)
 
   # Create the donut chart
   out <- ggplot(data, aes(x = 2, y = count, fill = Legend)) +

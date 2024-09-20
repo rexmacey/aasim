@@ -1,4 +1,9 @@
-# source("helper.r")
+test_that("simulations", {
+  simCH <- simTest$ChronHist1
+  expect_equal(round(simCH$simulation$portfolioValues[[1]][31]),4742333)
+  expect_equal(round(simCH$simulation$portfolioValues[[500]][31]),246153)
+  expect_equal(round(simCH$simulation$portfolioValues[[817]][31]),4278721)
+})
 
 test_that("calcRandReturns", {
     rndReturns <- calcRandReturns(10, 0.08, 0, 1, 101)
@@ -35,7 +40,17 @@ test_that("calcCFSub", {
     expect_equal(cfVec, expVec)
 })
 
-
+test_that("validateCashFlows", {
+    for (sim in simTest) {
+        expect_equal(validateCashFlows(sim), NULL)
+    }
+    sim <- simTest[[3]]
+    sim$lengthType <- "F"
+    expect_error(validateCashFlows(sim))
+    sim <- simTest[[3]]
+    sim$cf$type[1] <- "x"
+    expect_error(validateCashFlows(sim))
+})
 
 
 

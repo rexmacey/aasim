@@ -24,16 +24,16 @@ test_that("nCF.sim", {
     expect_equal(nCF.sim(simTest$sim2), 4)
 })
 
-test_that("initializeSim", {
-    sim <- initializeSim(description = "SimDesc",
+test_that("simClass", {
+    sim <- simClass(description = "SimDesc",
                          nTrials = 500,
                          startValue = 100000,
-                         lengthType = "R",
+                         lengthType = "M",
                          length = 10,
                          seed = 101,
                          defaultInflation = 0.025,
                          ror = 0.08,
                          stdDev = 0.09)
-    expect_equal(length(sim), length(formals(initializeSim)) + 2)
+    expect_equal(length(sim), length(formals(simClass)) + 2)
     # the +2 represents the cash flow and persons
 })

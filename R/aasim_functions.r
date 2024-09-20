@@ -11,12 +11,19 @@
 #'   ratesOfReturns is a list each item is a vector of 1 + the annual rate of return
 #' @export
 #'
-#' @examples \dontrun{simulateRandom(sim)}
-simulateRandom <- function(sim) {
+#' @examples \dontrun{simulateWealth(sim)}
+simulateWealth <- function(sim) {
     sbiSub <- sbi[sbi$Month >= sim$minDate & sbi$Month <= sim$maxDate,]
-    if (sim$randReturnType == "C") {
-        sim$lengthType <- "F" # override lengthType is necessary.
-        sim$nTrials <- nrow(sbiSub) - sim$length * 12 + 1
+    # to do
+    if (sim$returnGeneratorMethod == "C") {
+        if (nPersons.sim(sim) >= 1) {
+            idx <- which(sim$cf$startType %in% c("p1death", "p2death", "1stdeath", "2nddeath"))
+            sim$cf[idx, "startType"] <- "yr"
+            sim$cf[idx, "start"] <- sim$length
+            idx <- which(sim$cf$endType %in% c("p1death", "p2death", "1stdeath", "2nddeath"))
+            sim$cf[idx, "endType"] <- "yr"
+            sim$cf[idx, "end"] <- sim$length
+        }
     }
     set.seed(sim$seed)
     sim <- calcAgesForSimulation(sim)
@@ -27,21 +34,21 @@ simulateRandom <- function(sim) {
     out$cashFlows <- list()
     for (iTrial in 1:sim$nTrials) {
         out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
-        if (sim$randReturnType == "S") {
+        if (sim$returnGeneratorMethod == "S") {
             out$rateOfReturns[[iTrial]] <- 1 + calcRandReturns(out$lengths[iTrial], sim$ror, sim$stdDev, 1)
             histInflation <- 0
-        } else if (sim$randReturnType == "H") {
+        } else if (sim$returnGeneratorMethod == "H") {
             temp <- calcRandHistReturns(out$lengths[iTrial], sim$stockWt, sim$nConsecMonths, sim$retAdj, sbiSub)
             out$rateOfReturns[[iTrial]] <- temp$return
             out$inflationHist[[iTrial]] <- temp$inflation
             histInflation <- out$inflationHist[[iTrial]]
-        } else if (sim$randReturnType == "C") {
+        } else if (sim$returnGeneratorMethod == "C") {
             temp <- calcChronologicalHist(iTrial, out$lengths[iTrial], sbiSub, sim$stockWt)
             out$rateOfReturns[[iTrial]] <- temp$return
             out$inflationHist[[iTrial]] <- temp$inflation
             histInflation <- out$inflationHist[[iTrial]]
         } else {
-            stop(paste("Invalid randReturnTYpe:", sim$randReturnType, "Should be S, H or C."))
+            stop(paste("Invalid randReturnTYpe:", sim$returnGeneratorMethod, "Should be S, H or C."))
         }
 
         out$cashFlows[[iTrial]] <- calcCF(sim,
@@ -257,8 +264,10 @@ calcCFSub <- function(cf, sim, length, ageDeath1, ageDeath2, histInflation = 0) 
     if (endyr <= 0) return(out)
     if (startyr > endyr) return(out)
     if (startyr > (length + 1)) return(out)
-    if (sim$randReturnType == "H" | sim$overrideInflation) {
-        inflationRates <- cumprod(histInflation)
+    # Override inflation inputs if Chronological history or (Random history and
+    #the override inflation input) is true
+    if (sim$returnGeneratorMethod == "C" | (sim$returnGeneratorMethod == "H" & sim$overrideInflation)) {
+        inflationRates <- c(1, cumprod(histInflation))
     } else {
         if (cf$defaultInflationAdj) {
             inflationRates <- (1 + sim$defaultInflation) ^ ((startyr - 1):(endyr - 1))
@@ -266,6 +275,7 @@ calcCFSub <- function(cf, sim, length, ageDeath1, ageDeath2, histInflation = 0) 
             inflationRates <- (1 + cf$inflation) ^ ((startyr - 1):(endyr - 1))
         }
     }
+
     out[startyr:endyr] <- ifelse(tolower(cf$type) == "c", 1, -1) * cf$amount * inflationRates
     return(out)
 }
@@ -314,3 +324,24 @@ calcAgesForSimulation <- function(sim) {
     }
     return(sim)
 }
+
+validateCashFlows <- function(sim) {
+    temp <- unique(c(which(grepl("p1", sim$cf$startType)), which(grepl("p1", sim$cf$endType))) )
+    if (length(temp) > 0 & nPersons.sim(sim) < 1) {
+        stop("No persons defined in the simulation but there are cash flows associated with p1. See cash flows ", temp)
+    }
+    temp <- unique(c(which(grepl("p2", sim$cf$startType)), which(grepl("p2", sim$cf$endType))) )
+    if (length(temp) > 0 & nPersons.sim(sim) < 2) {
+        stop("No persons defined in the simulation but there are cash flows associated with p2. See cash flows ", temp)
+    }
+    temp <- unique(c(which(grepl("death", sim$cf$startType)), which(grepl("death", sim$cf$endType))))
+    if (length(temp) > 0 & (sim$lengthType == "F" | sim$returnGeneratorMethod == "C")) {
+        stop("A fixed length simulation was setup but there are cash flows associated with death. See cash flows ", temp)
+    }
+    temp <- c(which(grepl("C", toupper(sim$cf$type))), which(grepl("W", toupper(sim$cf$type))))
+    if (length(temp) != nrow(sim$cf)) {
+        stop("The type of cash flow should be 'c' or 'w'.")
+    }
+    return(NULL)
+}
+

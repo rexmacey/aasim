@@ -2,7 +2,7 @@
 % Please edit documentation in R/histReturn_functions.R
 \name{getHistoricalReturnStats}
 \alias{getHistoricalReturnStats}
-\title{Get Historical Return Stats}
+\title{Get Historical Returns and Inflation Statistics}
 \usage{
 getHistoricalReturnStats(
   stockWt,
@@ -11,20 +11,25 @@ getHistoricalReturnStats(
 )
 }
 \arguments{
-\item{stockWt}{Weighting to stocks. Bonds will be 1 - StockWt.  Enter 60\% as 0.60.}
+\item{stockWt}{Numeric vector containing weightings to stocks.  Weight to
+bonds will be 1 - stockWt.  Enter as decimal so 60\% is 0.60. seq(0, 1, 0.1)
+would produce the statistics for portfolios with weights to stocks of 0\% to
+100\% in 10\% increments.}
 
 \item{minDate}{Earliest historical date to use. Default is earliest in set.}
 
-\item{maxDate}{Latest historical date to use Default is most recent in set.}
+\item{maxDate}{Latest historical date to use. Default is most recent in set.}
 }
 \value{
-Names numeric vector with StocksGeomRet, BondsGeomRet, PortGeomRet,
-StocksSD, BondsSD, PortSD, StocksArithRet, BondsArithRet, PortArithRet in
-decimal.
+A list
+
+A list with two items.  portfolio is a data frame with a row for each
+stockWt and columns: StockWt, GeomReturn, ArithReturn, and StdDev.  The
+second item is the inflation rate.  All output is in decimal, not percent.
 }
 \description{
-Get Historical Return Stats
+Get Historical Returns and Inflation Statistics
 }
 \examples{
-\dontrun{getHistoricalReturnStats(0.6)}
+\dontrun{getHistoricalReturnStats(seq(0, 1, 0.1))}
 }

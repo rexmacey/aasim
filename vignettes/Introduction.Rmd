@@ -1,0 +1,299 @@
+---
+title: "Introduction"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "",
+  echo = FALSE
+)
+```
+
+```{r setup}
+# library(aasim)
+devtools::load_all()
+simTest <- simulatefromexcel("../tests/testthat/data/siminput.xlsx")
+# print(getwd())
+# list.files("../tests/testthat/data/")
+# print(testthat::test_path())
+simTest$sim1$description
+```
+The purpose of this package is to address the question: How long will an investor's money last? 
+Classic financial planning tools assume one age at death, usually a conservative one such as 
+95 years old.   Such tools answer the question "Will your money last until you are 95".  
+Our approach considers many possible ages of death and weights the results according to 
+the probability of living to those ages.   Thus our tool can answer the question, 
+"What is the probability your money outlasts you?".  In addition, it can answer the
+classic question.  In addition, we offer an additional analysis to answer the question,
+"Using historical data, how long would my money have lasted?".
+
+A simulation requires inputs about the investor and the market.  Essentially, we need a starting 
+investment and subsequent cash flows.   Then we apply a set of returns to those cash flows
+to calculate portfolio values.   If the portfolio meets or exceeds a target value at a specified time, it
+is counted as a success.   
+
+### Simulation Inputs
+A simulation requires some of the following inputs.  Some inputs are not required
+depending on the values of other inputs.  There is general information
+associated with a simulation; there may be 0, 1 or 2 persons associated with a 
+simulation, and there may be 0 or any number of cash flows.
+
+description
+: A description of the simulation.    
+
+nTrials
+: The number of trials in a simulation. This applies when the *returnGeneratorMethod* is "S" or "H". 
+It is ignored if the *returnGeneratorMethod* is "C".    
+ 
+startValue
+: Starting value (initial investment).    
+
+lengthType
+: Either "F" for fixed length or "M" for mortality.  If "F", then every trial in the 
+simulation will be *length* years long. If "M", the length will depend on the 
+mortality tables.  If "F", then *returnGeneratorMethod* may be "S", "H", or "C".  If
+"M" it may only be "S" or "H".    
+
+length
+: The length in years of all the trials when the *lengthType* is "F".  It is
+ignored is the *lengthType* is "M".  In the results of a simulation, there will
+be *length* + 1 values because the first value represents year 0 (now) and then 
+there are 1 to *length* subsequent years.  The results will have *length* rates
+of return.    
+
+seed
+: The seed used in the set.seed function to initialize the random number 
+generator.  Using the same seed allows one to generate the same sequence of 
+random numbers allowing for repeatability.     
+
+defaultInflation
+: The default inflation rate which is applied to cash flows.   Each cash flow
+may have its own inflation rate.    
+
+ror
+: The rate of return used when creating lognormally distributed random returns. 
+Enter 8% as 0.08.    
+
+stdDev
+: The standard deviation used when creating lognormally distributed random returns. 
+Enter 9% as 0.09.    
+             
+targetValue
+: The target value defines the success or failure of a trial.  A trial is a success
+if the terminal value exceeds the *targetValue*.  The default is .Machine$double.eps
+which is a small positive value. See also *targetValueIsReal*.    
+
+targetValueIsReal
+: A boolean to indicate whether the *targetValue* is adjusted by inflation.  
+The default is TRUE.    
+
+stockWt
+: When calculating returns using historical data, this is the weighting to assign
+to stocks.  (1 - *stockWt*) will be assigned to bonds.    
+
+nConsecMonths
+: When generating random returns using historical data, this variable indicates the
+number of consecutive months which will be drawn.  The default is 12.  Valid 
+values are 1, 2, 3, 4, 6, 12 (factors of 12).  For example if *nConsecMonths* is
+3, then 4 draws of 3 consecutive months will be used to create a one-year return.    
+
+retAdj
+: The random returns generated using historical data (*returnGeneratorMethod* = "H") will be
+adjusted by adding *retAdj* to each year's return.  The default is zero. 
+Ignored if *returnGeneratorMethod* = "S" or "C".
+
+minDate
+: Used to filter the historical data set.   *minDate*  represents the earliest
+date historical returns will be used. The default is to use the earliest 
+available.      
+
+maxDate = max(sbi$Month),
+: Used to filter the historical data set.   *maxDate*  represents the latest
+date historical returns will be used. The default is to use the most recent
+available.    
+
+overrideInflation
+: This applies when *returnGeneratorMethod* = "H".  If TRUE, then the historical
+inflation rate is used to adjust cash flows. It is ignored for other 
+*returnGeneratorMethod* values. Historical inflation is always used when 
+Chronological history is used and never when returns are generated
+statistically.
+
+asOfDate
+: The date used to calculate current ages of persons in the simulation.  
+The default is the Sys.Date(),    
+
+returnGeneratorMethod
+: This may be "S", "H", or "C".  "S" causes the system to generate lognormally
+distributed random returns.    "H" randomly draws *nConsecMonth* of returns and
+inflation using historical data.   "C" is not random. It indicated "Chronological"
+history.   This is used to see how long the money will last using history as a guide.    
+
+Each simulation may have 0, 1 or 2 persons.   If 0, then the *lengthType* must be
+"F".  Without people, the mortality tables cannot be applied so the *length* will
+determine the time horizon of a simulation.
+
+**Persons**
+Each person has the following information (variables).
+
+name
+: Name of the person.    
+
+initials
+: Initials to use in tables, charts where the name will not fit.    
+
+birthdate
+: Date of birth.  Used to determine age.  To protect PII, this may be close.    
+
+gender
+: M for male or F for female.     
+
+retireAge
+: Age of retirement
+
+mort.factor
+: Mortality factor.  Values (probabilities of dying) in the mortality table are
+multiplied by this value. Larger than 1 values increase chance of dying so 
+persons don't live as long as those with smaller values.    
+
+mort.adj.years
+: A value to add to each randomly generated age at death.  It may be negative to
+reduce lifespans. This is probably the easiest way to adust mortality tables.
+
+**Cash Flows**
+Each simulation may have multiple cash flows associated with it.  The variables
+associated with a cash flow are:
+
+description
+: A string describing the cash flow.      
+
+startType
+: Here are the types that describe when a cash flow starts- yr
+indicates a numeric value will be supplied such as 1 to start year one and 10
+to end year 10. p1age, p2age is the age of person1 or person 2; p1ret, p2ret
+is the retirement age of person1 or person 2; p1death, p2death is the age at
+death  of person1 or person 2; 1stdeath, 2nddeath is the death of the 1st to
+die, or the 2nd to die; start is first year (equivalent to startType=='yr' and
+specifying 1 for the start); end is last year.    
+
+A note on the startType and endType.  yr, start, and end may be used in any
+simulation regardless of the *lengthType* or *returnGeneratorMethod*.  p1age, p2age,
+p1ret, p2ret, may be used in any simulation that defines one or two persons 
+respectively.   p1death, p2death, 1stdeath, and 2nddeath may only be used in 
+simulations when the *lengthType* is "M" and the *returnGeneratorMethod* is not "C" and 
+the appropriate number of persons is defined.
+
+start
+: The year or age the cash flow starts depending on the value of 
+*startType*.  Ignored in some cases such as 1stdeath.    
+
+endType
+: Here are the types that describe when a cash flow starts- yr
+indicates a numeric value will be supplied such as 1 to start year one and 10
+to end year 10. p1age, p2age is the age of person1 or person 2; p1ret, p2ret
+is the retirement age of person1 or person 2; p1death, p2death is the age at
+death  of person1 or person 2; 1stdeath, 2nddeath is the death of the 1st to
+die, or the 2nd to die; start is first year (equivalent to startType=='yr' and
+specifying 1 for the start); end is last year.    
+
+end
+: The year or age the cash flow ends depending on the value of 
+*endType*.  Ignored in some cases such as 1stdeath.    
+
+type
+: Either "c" for contribution or "w" for withdrawal.    
+
+amount
+: Amount of the cash flow.    
+
+defaultInflationAdj
+: Boolean.  If TRUE, the *defaultInflation* value for the simulation is used.
+
+inflation
+: If the *defaultInflationAdj* is FALSE, then this value is used to inflate the
+cash flows.
+
+Cash flows in a simulation may be validated using the *validateCashFlows*
+function which validates all the cash flows in a simulation. 
+
+### Overview of the Calculations.     
+
+First, the number of trials is established.  If *returnGeneratorMethod* is "S" or "H" 
+there will be *nTrials*.  If the value is "C", the number of trials will be a 
+function of the number of months of historical data available, the *minDate*, 
+the *maxDate* and the *length* of a trial.   Let's say there are 360 months of
+data available after adjusting for the *minDate* and *maxDate*.  If the *length*
+of a trial is 30 years (360 months) then there is only 1 trial available. If 
+361 months of data are available, then there would be 2 trials.
+
+If the *lengthType* is "M" (then there must be 1 or 2 persons as inputs), 
+*nTrials* ages of death are generated.   
+
+There is a loop for each trial. *length* + 1 portfolio values will be calculated.
+The first value will be set equal to *startValue*.  This may also be considered
+a cash flow in year 0.
+
+All the cash flows are evaluated and combined for a trial to create a vector of
+*length* + 1.  
+
+The returns are generated for the trial using either: randomly generated from a
+lognormal distribution, randomly chosen from history, or using chronological 
+history.
+
+The returns are applied the the previous portfolio value and then the result is 
+adjusted for the net cash flow.  This means that cash flows occur at the end
+of the year.
+
+### Intermediate Output
+The simulateWealth function (which is a misnomer in when the *returnGeneratorMethod*
+is "C") produces the following results.  We're calling this intermediate output
+because it may be used to create final output rather than being displayed to the
+user. After the simulateWealth function is run, a list named simulation will be
+part of the sim object.  It will contain:
+
+lengths
+: A vector with length *nTrials* if *randReturnTYpe* is "S" or "H".  If "C", the
+length will be determined by the number of months of historical returns 
+available less the *length* + 1.      
+
+agesDeath1 and agesDeath2
+: If the person inputs are not supplied, these will be NA.  Otherwise, these 
+will be vectors of the ages at which the persons dies.     
+
+portfolioValues
+: A list with a vector of the portfolio values for each trial.  The length of
+each vector will be one longer than the length of the trials in years.  
+The first element represents the starting value plus any cash flows that 
+happen immediately (e.g., if the person is retired and a flow starts at 
+retirement).    
+
+ratesOfReturns
+: A list with a vector of 1 + the returns for each trial.  The length of
+each vector will equal the length of the trials in years.     
+
+inflationHist
+: A list with a vector of 1 + the historical inflation for each trial.  The length of
+each vector will equal the length of the trials in years.  This won't be 
+populated if the *randReturnTYpe* is "S".    
+
+cashFlows
+: A list with a vector of the net cash flows for each trial.  The length of
+each vector will be one longer than the length of the trials in years.  
+Contributions will be positive, and withdrawals negative.    
+
+runDate
+: The date the simulation was run.
+
+### Example: Chronological History
+```{r}
+sim <- simTest$ChronHist1
+print.sim(sim)
+
+```
+

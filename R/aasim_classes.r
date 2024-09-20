@@ -3,7 +3,7 @@
 #' @param description Description of simulation
 #' @param nTrials number of trials
 #' @param startValue Starting dollar value
-#' @param lengthType 'R' for random, or 'F' for fixed. If number of persons is 0, then F is assumed.
+#' @param lengthType 'M' for mortality, or 'F' for fixed. If number of persons is 0, then F is assumed.
 #' @param length Length for fixed type of simulations in years
 #' @param seed Seed for random number generator
 #' @param defaultInflation Inflation rate in decimal
@@ -20,16 +20,16 @@
 #' @param overrideInflation If TRUE, inflation inputs in cash flows will be overridden by
 #' the historical rates of inflation whenusing historical random returns.
 #' @param asOfDate Date to run the simulation as of. Used when calculating ages.
-#' @param randReturnType Either "S", the default, for statistical(random lognormal)or "H" for historical.
+#' @param returnGeneratorMethod Either "S", the default, for statistical(random lognormal)or "H" for historical.
 #'
 #' @return List with values describing simulation
-#' @seealso [calcRandHistReturns()], [simulateRandom()]
+#' @seealso [calcRandHistReturns()], [simulateWealth()]
 #' @export
 #'
-#' @examples \dontrun{initializeSim("Sim1 Test", nTrials=500, 1000000, lengthType="R",
+#' @examples \dontrun{simClass("Sim1 Test", nTrials=500, 1000000, lengthType="R",
 #' length=0, seed=-101, defaultInflation=0, ror=0.10, stdDev=.08,
 #' targetValue=.Machine$double.eps, targetValueIsReal=FALSE)}
-initializeSim <-
+simClass <-
     function(description,
              nTrials,
              startValue,
@@ -48,12 +48,27 @@ initializeSim <-
              maxDate = max(sbi$Month),
              overrideInflation = TRUE,
              asOfDate = Sys.Date(),
-             randReturnType = "S") {
+             returnGeneratorMethod = "S") {
         sim <- list()
         sim[["description"]] <- description
-        sim[["nTrials"]] <- nTrials
+        if (returnGeneratorMethod == "C") {
+            tmp <- nrow(sbi[sbi$Month >= minDate & sbi$Month <= maxDate,])
+            sim[["nTrials"]] <- tmp - length * 12 + 1
+            sim[["lengthType"]] <- "F"
+            sim[["overrideInflation"]] <- TRUE # always use hist inflation for chronological history
+            sim[["retAdj"]] <- 0
+        } else {
+            sim[["nTrials"]] <- nTrials
+            sim[["lengthType"]] <- lengthType
+            if (returnGeneratorMethod == "H") {
+                sim[["overrideInflation"]] <- overrideInflation
+                sim[["retAdj"]] <- retAdj
+            } else {
+                sim[["overrideInflation"]] <- FALSE # when using statistical
+                sim[["retAdj"]] <- 0
+            }
+        }
         sim[["startValue"]] <- startValue
-        sim[["lengthType"]] <- lengthType
         sim[["length"]] <- length
         sim[["seed"]] <- seed
         sim[["defaultInflation"]] <- defaultInflation
@@ -63,12 +78,11 @@ initializeSim <-
         sim[["targetValueIsReal"]] <- targetValueIsReal
         sim[["stockWt"]] <- stockWt
         sim[["nConsecMonths"]] <- nConsecMonths
-        sim[["retAdj"]] <- retAdj
+
         sim[["minDate"]] <- minDate
         sim[["maxDate"]] <- maxDate
-        sim[["overrideInflation"]] <- overrideInflation
         sim[["asOfDate"]] <- asOfDate
-        sim[["randReturnType"]] <- toupper(randReturnType)
+        sim[["returnGeneratorMethod"]] <- toupper(returnGeneratorMethod)
         sim[["cf"]] <- initializeCF()
         sim[["persons"]] <- list()
         class(sim) <- "sim"
@@ -228,3 +242,116 @@ addCF <-
         simCF <- rbind(simCF, new.df)
         return(simCF)
     }
+
+#' Print Simulation Object
+#'
+#' @param x Simulation object
+#' @param ... further arguments to or from other methods
+#'
+#' @return Print result
+#' @export
+#'
+#' @examples \dontrun{print.sim(sim)}
+print.sim <- function(x, ...) {
+    print_sim_main(x)
+    if (nCF.sim(x) >= 1) {
+        cat("\nCash Flows\n")
+        print_sim_cf(x$cf)
+    }
+    if (nPersons.sim(x) >= 1){
+        cat("\nPersons\n")
+        print_sim_persons(x)
+    }
+    # print results if available
+    blnResultsAvailable <- "simulation" %in% names(x)
+    if (blnResultsAvailable) {
+        print_sim_results(x)
+    }
+}
+
+#' Print main variables of a simulation object
+#'
+#' @param sim Simulation object
+#'
+#' @return Print
+print_sim_main <- function(sim) {
+    printSub("Description", sim$description)
+    if (sim$returnGeneratorMethod != "C") printSub("Number of trials", sim$nTrials)
+    printSub("Starting Value", scales::dollar(sim$startValue))
+    printSub("Length Type", sim$lengthType)
+    if (sim$lengthType == "F") printSub("Length", paste(sim$length, "years"))
+    printSub("Seed", sim$seed)
+    printSub("Default Inflation Rate", sim$defaultInflation)
+    printSub("Target Value", scales::dollar(sim$targetValue))
+    printSub("Is Target Value in Real Terms", sim$targetValueIsReal)
+    printSub("As of Date", as.character(sim$asOfDate))
+    if (sim$returnGeneratorMethod == "S") {
+        printSub("Rate of Return (Arithmetic", sim$ror)
+        printSub("Standard Deviation", sim$stdDev)
+    } else {
+        printSub("Stock Weight", sim$stockWt)
+        printSub("Minimum Date", as.character(sim$minDate))
+        printSub("Maximum Date", as.character(sim$maxDate))
+    }
+    if (sim$returnGeneratorMethod == "H") {
+        printSub("Number of Consecutive Months", sim$nConsecMonths)
+        printSub("Return Adjustment", sim$retAdj)
+    }
+    printSub("Override Inflation", sim$overrideInflation)
+
+}
+
+#' Print a line of a simulation object
+#'
+#' @param desc Description of what is to be printed
+#' @param value Formatted value
+#'
+#' @return Print
+printSub <- function(desc, value) {
+    cat(desc, ":", value, "\n")
+}
+
+#' Print cash flow variables of a simulation object
+#'
+#' @param cf Cash flow table (data frame)
+#'
+#' @return Print
+print_sim_cf <- function(cf) {
+    print(cf)
+}
+
+#' Print person variables of a simulation object
+#'
+#' @param sim Simulation object
+#'
+#' @return Print
+print_sim_persons <- function(sim) {
+    if (nPersons.sim(sim) == 0) return()
+    out <- data.frame(Name = sim$persons[[1]]$name,
+                      Initials = sim$persons[[1]]$initials,
+                      BirthDate = as.character(sim$persons[[1]]$birthDate),
+                      Gender = sim$persons[[1]]$gender,
+                      RetirementAge = sim$persons[[1]]$retireAge,
+                      MortalityFactor = sim$persons[[1]]$mort.factor,
+                      MortalityAdjustment = sim$persons[[1]]$mort.adj.years)
+    if (nPersons.sim(sim) > 1) {
+        out <- rbind(out,
+                     data.frame(Name = sim$persons[[2]]$name,
+                                Initials = sim$persons[[2]]$initials,
+                                BirthDate = as.character(sim$persons[[2]]$birthDate),
+                                Gender = sim$persons[[2]]$gender,
+                                RetirementAge = sim$persons[[2]]$retireAge,
+                                MortalityFactor = sim$persons[[2]]$mort.factor,
+                                MortalityAdjustment = sim$persons[[2]]$mort.adj.years))
+    }
+    print(out)
+}
+
+print_sim_results <- function(sim) {
+    out <- list()
+    out$SuccessStats <- getSuccessStats(sim)
+    printSub("Success Rate vs Target", paste0(round(out$SuccessStats$vsTargetPct), "%"))
+    printSub("Success Rate vs $0", paste0(round(out$SuccessStats$vs0Pct), "%"))
+    chartSuccessDonut(sim)
+    chartValuesOverTime(sim)
+}

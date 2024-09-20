@@ -72,36 +72,46 @@ calcRandHistReturns <- function(n,
     return(out)
 }
 
-#' Get Historical Return Stats
+#' Get Historical Returns and Inflation Statistics
 #'
-#' @param stockWt Weighting to stocks. Bonds will be 1 - StockWt.  Enter 60\% as 0.60.
+#' @param stockWt Numeric vector containing weightings to stocks.  Weight to
+#' bonds will be 1 - stockWt.  Enter as decimal so 60\% is 0.60. seq(0, 1, 0.1)
+#' would produce the statistics for portfolios with weights to stocks of 0\% to
+#' 100\% in 10\% increments.
 #' @param minDate Earliest historical date to use. Default is earliest in set.
-#' @param maxDate Latest historical date to use Default is most recent in set.
+#' @param maxDate Latest historical date to use. Default is most recent in set.
 #'
-#' @return Names numeric vector with StocksGeomRet, BondsGeomRet, PortGeomRet,
-#' StocksSD, BondsSD, PortSD, StocksArithRet, BondsArithRet, PortArithRet in
-#' decimal.
+#' @return A list
+#' @return A list with two items.  portfolio is a data frame with a row for each
+#' stockWt and columns: StockWt, GeomReturn, ArithReturn, and StdDev.  The
+#' second item is the inflation rate.  All output is in decimal, not percent.
 #' @export
 #'
-#' @examples \dontrun{getHistoricalReturnStats(0.6)}
-getHistoricalReturnStats <- function(stockWt, minDate = min(sbi$Month),
+#' @examples \dontrun{getHistoricalReturnStats(seq(0, 1, 0.1))}
+getHistoricalReturnStats <- function(stockWt,
+                                     minDate = min(sbi$Month),
                                      maxDate = max(sbi$Month)) {
-    # utils::data("sbi") # stocks, bonds and inflation data by month
-    sbiSub <- sbi[sbi$Month >= minDate & sbi$Month <= maxDate,]
-    sbiSub$Port <- sbiSub$Stocks * stockWt + sbiSub$Bonds * (1 - stockWt)
-    nYrs <- nrow(sbiSub) / 12
-    out <- c(StocksGeomRet = prod(1 + sbiSub$Stocks)^(1 / nYrs) - 1,
-             BondsGeomRet = prod(1 + sbiSub$Bonds)^(1 / nYrs) - 1,
-             PortGeomRet = prod(1 + sbiSub$Port)^(1 / nYrs) - 1,
-             StocksSD = stats::sd(sbiSub$Stocks) * sqrt(12),
-             BondsSD = stats::sd(sbiSub$Bonds) * sqrt(12),
-             PortSD = stats::sd(sbiSub$Port) * sqrt(12),
-             Inflation = prod(1 + sbiSub$Inflation)^(1 / nYrs) - 1)
-    out1 <- out[1:3] + out[4:6] ^ 2 / 2
-    names(out1) <- c("StocksArithRet", "BondsArithRet", "PortArithRet")
-    return(c(out, out1))
+    sbiSub <- sbi[sbi$Month >= minDate & sbi$Month <= maxDate, ]
+    nYrs <- max(1, nrow(sbiSub) / 12)
+    out <- list()
+    nPortfolios <- length(stockWt)
+    out$portfolio <- data.frame(
+        StockWt = stockWt,
+        GeomReturn = numeric(nPortfolios),
+        ArithReturn = numeric(nPortfolios),
+        StdDev = numeric(nPortfolios)
+    )
+    for (i in 1:length(stockWt)) {
+        wt <- stockWt[i]
+        sbiSub$Port <- sbiSub$Stocks * wt + sbiSub$Bonds * (1 - wt)
+        out$portfolio[i, "GeomReturn"] <- prod(1 + sbiSub$Port) ^ (1 / nYrs) - 1
+        out$portfolio[i, "StdDev"] <- stats::sd(sbiSub$Port) * sqrt(12)
+        out$portfolio[i, "ArithReturn"] <- out$portfolio[i, "GeomReturn"] +
+            out$portfolio[i, "StdDev"] ^ 2 / 2
+    }
+    out$inflation = prod(1 + sbiSub$Inflation) ^ (1 / nYrs) - 1
+    return(out)
 }
-
 #' Calculate Chronological History
 #'
 #' Generates sequential returns and inflation rates using the sbi table.
