@@ -4,10 +4,12 @@
 \alias{chartSuccessDonut}
 \title{Success Donut Chart}
 \usage{
-chartSuccessDonut(sim)
+chartSuccessDonut(sim, vs = "T")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{vs}{Choices are 'T' for target or "Z' for zero}
 }
 \value{
 a ggplot object

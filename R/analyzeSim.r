@@ -132,7 +132,7 @@ getSuccessByLength <- function(sim) {
         out$SuccessVs0Count[i] <- sum(successStats$successVs0ByTrial[idx])
     }
     out$SuccessVsTargetPct <- 100 * (out$SuccessVsTargetCount / out$Frequency)
-    out$SuccessVs0tPct <- 100 * (out$SuccessVs0Count / out$Frequency)
+    out$SuccessVs0Pct <- 100 * (out$SuccessVs0Count / out$Frequency)
     out$SuccessVsTargetCumCount <- cumsum(out$SuccessVsTargetCount)
     out$SuccessVs0CumCount <- cumsum(out$SuccessVs0Count)
     out$CumFrequency <- cumsum(out$Frequency)

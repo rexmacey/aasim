@@ -2,7 +2,7 @@
 % Please edit documentation in R/graphSim.r
 \name{chartValuesOverTime}
 \alias{chartValuesOverTime}
-\title{Values across Time vs Target}
+\title{Values across Time vs Target Chart}
 \usage{
 chartValuesOverTime(sim)
 }

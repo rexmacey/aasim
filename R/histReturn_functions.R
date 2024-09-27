@@ -82,9 +82,10 @@ calcRandHistReturns <- function(n,
 #' @param maxDate Latest historical date to use. Default is most recent in set.
 #'
 #' @return A list
-#' @return A list with two items.  portfolio is a data frame with a row for each
+#' @return A list with four items.  portfolio is a data frame with a row for each
 #' stockWt and columns: StockWt, GeomReturn, ArithReturn, and StdDev.  The
-#' second item is the inflation rate.  All output is in decimal, not percent.
+#' second item is the inflation rate.  These in decimal, not percent.  The
+#' minDate and maxDate are returned.
 #' @export
 #'
 #' @examples \dontrun{getHistoricalReturnStats(seq(0, 1, 0.1))}
@@ -110,6 +111,8 @@ getHistoricalReturnStats <- function(stockWt,
             out$portfolio[i, "StdDev"] ^ 2 / 2
     }
     out$inflation = prod(1 + sbiSub$Inflation) ^ (1 / nYrs) - 1
+    out$minDate <- minDate
+    out$maxDate <- maxDate
     return(out)
 }
 #' Calculate Chronological History
@@ -133,5 +136,21 @@ calcChronologicalHist <- function(startIdx, n, sbiSub, stockWt) {
         return = sapply(seq(startIdx, endIdx, 12), function(x) prod(sbiSub$Stocks[x:(x + 11)] * stockWt +
                                                                         sbiSub$Bonds[x:(x + 11)] * (1 - stockWt) + 1)),
         inflation = sapply(seq(startIdx, endIdx, 12), function(x) prod(1 + sbiSub$Inflation[x:(x + 11)])))
+    return(out)
+}
+
+#' Get the Min and Max SBI Dates
+#'
+#' Returns a list with the first and last dates of the months in the
+#' Stock, Bonds, Inflation (SBI) table.
+#'
+#' @return list with minDate and maxDate
+#' @export
+#'
+#' @examples \dontrun{getSBIDateRange()}
+getSBIDateRange <- function() {
+    out <- list()
+    out$minDate = min(sbi$Month)
+    out$maxDate = max(sbi$Month)
     return(out)
 }

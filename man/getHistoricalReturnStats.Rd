@@ -23,9 +23,10 @@ would produce the statistics for portfolios with weights to stocks of 0\% to
 \value{
 A list
 
-A list with two items.  portfolio is a data frame with a row for each
+A list with four items.  portfolio is a data frame with a row for each
 stockWt and columns: StockWt, GeomReturn, ArithReturn, and StdDev.  The
-second item is the inflation rate.  All output is in decimal, not percent.
+second item is the inflation rate.  These in decimal, not percent.  The
+minDate and maxDate are returned.
 }
 \description{
 Get Historical Returns and Inflation Statistics

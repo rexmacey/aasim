@@ -18,6 +18,8 @@ knitr::opts_chunk$set(
 ```{r setup}
 # library(aasim)
 devtools::load_all()
+library(ggplot2)
+library(scales)
 simTest <- simulatefromexcel("../tests/testthat/data/siminput.xlsx")
 # print(getwd())
 # list.files("../tests/testthat/data/")
@@ -291,7 +293,7 @@ runDate
 : The date the simulation was run.
 
 ### Example: Chronological History
-```{r}
+```{r, fig.width=6, fig.height=4}
 sim <- simTest$ChronHist1
 print.sim(sim)
 

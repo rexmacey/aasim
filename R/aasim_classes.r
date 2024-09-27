@@ -18,7 +18,7 @@
 #' @param minDate MinDate Earliest date to use when generating historical random returns.
 #' @param maxDate MaxDate Latest date to use when generating historical random returns.
 #' @param overrideInflation If TRUE, inflation inputs in cash flows will be overridden by
-#' the historical rates of inflation whenusing historical random returns.
+#' the historical rates of inflation when using historical random returns.
 #' @param asOfDate Date to run the simulation as of. Used when calculating ages.
 #' @param returnGeneratorMethod Either "S", the default, for statistical(random lognormal)or "H" for historical.
 #'
@@ -39,7 +39,7 @@ simClass <-
              defaultInflation = 0,
              ror,
              stdDev,
-             targetValue = .Machine$double.eps,
+             targetValue = 0.01,
              targetValueIsReal = TRUE,
              stockWt = 0.6,
              nConsecMonths = 12,
@@ -352,6 +352,7 @@ print_sim_results <- function(sim) {
     out$SuccessStats <- getSuccessStats(sim)
     printSub("Success Rate vs Target", paste0(round(out$SuccessStats$vsTargetPct), "%"))
     printSub("Success Rate vs $0", paste0(round(out$SuccessStats$vs0Pct), "%"))
-    chartSuccessDonut(sim)
+    chartSuccessDonut(sim, "T")
+    chartSuccessDonut(sim, "Z")
     chartValuesOverTime(sim)
 }

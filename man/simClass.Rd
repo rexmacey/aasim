@@ -14,7 +14,7 @@ simClass(
   defaultInflation = 0,
   ror,
   stdDev,
-  targetValue = .Machine$double.eps,
+  targetValue = 0.01,
   targetValueIsReal = TRUE,
   stockWt = 0.6,
   nConsecMonths = 12,
@@ -61,7 +61,7 @@ adjusted for inflation. Default is TRUE.}
 \item{maxDate}{MaxDate Latest date to use when generating historical random returns.}
 
 \item{overrideInflation}{If TRUE, inflation inputs in cash flows will be overridden by
-the historical rates of inflation whenusing historical random returns.}
+the historical rates of inflation when using historical random returns.}
 
 \item{asOfDate}{Date to run the simulation as of. Used when calculating ages.}
 

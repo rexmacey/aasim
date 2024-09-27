@@ -32,6 +32,8 @@ simulateWealth <- function(sim) {
     out$rateOfReturns <- list()
     out$inflationHist <- list()
     out$cashFlows <- list()
+    out$irr <- numeric(sim$nTrials)
+    out$probSuccess <- as.numeric(rep(NA, sim$nTrials)) # only with RGM = "S"
     for (iTrial in 1:sim$nTrials) {
         out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
         if (sim$returnGeneratorMethod == "S") {
@@ -56,8 +58,12 @@ simulateWealth <- function(sim) {
                             out$agesDeath1[iTrial],
                             out$agesDeath2[iTrial],
                             histInflation)
-        out$portfolioValues[[iTrial]][1] <- sim$startValue + out$cashFlows[[iTrial]][1]
-
+        out$cashFlows[[iTrial]][1] <- sim$startValue + out$cashFlows[[iTrial]][1]
+        out$irr[iTrial] <- calcIRR(out$cashFlows[[iTrial]])
+        if (sim$returnGeneratorMethod == "S" & !is.na(out$irr[iTrial])) {
+            out$probSuccess[iTrial] <- AA_Prob(out$irr[iTrial], sim$ror, sim$stdDev, out$lengths[iTrial])
+        }
+        out$portfolioValues[[iTrial]][1] <- out$cashFlows[[iTrial]][1]
         if (out$lengths[iTrial] < 1) next
         for (i in 2:(out$lengths[iTrial] + 1)) {
             out$portfolioValues[[iTrial]][i] <- out$portfolioValues[[iTrial]][i - 1] * out$rateOfReturns[[iTrial]][i - 1] + out$cashFlows[[iTrial]][i]
@@ -325,6 +331,14 @@ calcAgesForSimulation <- function(sim) {
     return(sim)
 }
 
+#' Validate Cash Flows
+#'
+#' @param sim Simulation object
+#'
+#' @return NULL is all cash flows are valid. Otherwise an error will be generated
+#' @export
+#'
+#' @examples \dontrun{validateCashFlows(sim)}
 validateCashFlows <- function(sim) {
     temp <- unique(c(which(grepl("p1", sim$cf$startType)), which(grepl("p1", sim$cf$endType))) )
     if (length(temp) > 0 & nPersons.sim(sim) < 1) {
@@ -345,3 +359,56 @@ validateCashFlows <- function(sim) {
     return(NULL)
 }
 
+#' Calculates the IRR of a stream of cash flow
+#'
+#' Returns the IRR of a stream of cash flows.  NA will be returned
+#' if there isn't at least one positive and one negative value.  If
+#' the IRR is outside the range -99.99\% to 10000\%, NA is likely to be produced.
+#'
+#' @param cashflows Vector of cash flows. These should include at least one
+#' positive and one negative value.
+#'
+#' @return Decimal IRR or NA.
+#' @export
+#'
+#' @examples \dontrun{calcIRR(cashflows)}
+calcIRR <- function(cashflows) {
+    if (length(cashflows) == 0) return(NA)
+    # all cash flows are positive, return -100%.
+    if (min(cashflows) >= 0) return(-1)
+    # all cash flows are negative, return NA
+    if (max(cashflows) <= 0) return(NA)
+    npv <- function(rate, cashflows) {
+        sum(cashflows / (1 + rate) ^ (0:(length(cashflows) - 1)))
+    }
+    out <- tryCatch({
+        # Your code that might produce an error
+        uniroot(npv, c(-0.9999, 100), tol = 0.00005, cashflows = cashflows)$root
+    }, error = function(e) {
+        # Code to execute if an error occurs
+        NA
+    })
+    return(out)
+}
+
+#' Probability of achieving a specified return
+#'
+#' Returns the probability of doing at least as well as over t
+#'
+#' @param target Target (specified) return
+#' @param r Mean Return
+#' @param sd Standard deviation of returns
+#' @param t Time in years
+#'
+#' @return value representing a probability.
+#' @export
+#'
+#' @examples AA_Prob(7.339443,8,12,10)
+AA_Prob <- function(target, r, sd, t) {
+    vmean <- 1 + r/100
+    vsd <- sd/100
+    vlnsd <- sqrt(log(1 + (vsd/vmean)^2))
+    vlner <- log(vmean) - vlnsd^2/2
+    return(1 - pnorm(log((target/100 + 1)^t), vlner * t, vlnsd *
+                         sqrt(t)))
+}

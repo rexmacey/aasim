@@ -7,3 +7,4 @@
 ^tests/sandbox\.r$
 ^data-raw$
 ^\./r/data\.r$
+^website$
