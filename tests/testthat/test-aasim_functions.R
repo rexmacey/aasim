@@ -1,8 +1,8 @@
 test_that("simulations", {
   simCH <- simTest$ChronHist1
-  expect_equal(round(simCH$simulation$portfolioValues[[1]][31]),4742333)
-  expect_equal(round(simCH$simulation$portfolioValues[[500]][31]),246153)
-  expect_equal(round(simCH$simulation$portfolioValues[[817]][31]),4278721)
+  expect_equal(round(simCH$simulation$portfolioValues[[1]][31]),4670012)
+  expect_equal(round(simCH$simulation$portfolioValues[[500]][31]),206351)
+  expect_equal(round(simCH$simulation$portfolioValues[[817]][31]),4640237)
 })
 
 test_that("calcRandReturns", {

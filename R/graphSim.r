@@ -210,3 +210,5 @@ chartDistOfTime <- function(sim) {
         return(ggarrange(p1, p2, p3, ncol = 1, nrow = 3))
     }
 }
+
+

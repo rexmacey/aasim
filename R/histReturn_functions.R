@@ -133,8 +133,8 @@ getHistoricalReturnStats <- function(stockWt,
 calcChronologicalHist <- function(startIdx, n, sbiSub, stockWt) {
     endIdx <- startIdx + n * 12 - 1
     out <- data.frame(
-        return = sapply(seq(startIdx, endIdx, 12), function(x) prod(sbiSub$Stocks[x:(x + 11)] * stockWt +
-                                                                        sbiSub$Bonds[x:(x + 11)] * (1 - stockWt) + 1)),
+        return = sapply(seq(startIdx, endIdx, 12), function(x) (prod(1 + sbiSub$Stocks[x:(x + 11)]) - 1) * stockWt +
+                                                               (prod(1 + sbiSub$Bonds[x:(x + 11)]) - 1) * (1 - stockWt)),
         inflation = sapply(seq(startIdx, endIdx, 12), function(x) prod(1 + sbiSub$Inflation[x:(x + 11)])))
     return(out)
 }

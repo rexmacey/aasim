@@ -7,7 +7,7 @@
 getDistribution(
   x,
   probs = c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
-  includeGeomAvg = FALSE
+  isReturnSeries = FALSE
 )
 }
 \arguments{
@@ -15,17 +15,22 @@ getDistribution(
 
 \item{probs}{numeric vector of probabilities with values in [0, 1]}
 
-\item{includeGeomAvg}{boolean to include geometric average}
+\item{isReturnSeries}{boolean if a return series. Will include geometric average
+and subtract 1 from the probs and summary items.}
 }
 \value{
-list with nObs, quanitles associated with the probs, summary, and
-the sd (standard deviation)
+list with nObs - the number of observations;
+probs - the quanitles associated with the probs;
+summary - results of the summary function;
+sd - the (standard deviation); and,
+geomAvg the geometric average if isReturnSeries is TRUE
 }
 \description{
-Intended to return summary statistics for series in the simulation such as
+Intended to produce summary statistics for series in the simulation such as
 rateOfReturns, agesDeath1 and such.  The geometric average makes sense to
-include for rateOfReturn and inflation, but not for ages.  If includeGeomAvg
-== TRUE, one will be added to each value for that calculation.
+include for rateOfReturn and inflation, but not for ages.  If isReturnSeries
+== TRUE, the returns and standard deviation will be showin in percent, not
+decimal.
 }
 \examples{
 \dontrun{getDistribution(unlist(sim$simulation$rateOfReturns) - 1,

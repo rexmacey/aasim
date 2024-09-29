@@ -46,7 +46,7 @@ simulateWealth <- function(sim) {
             histInflation <- out$inflationHist[[iTrial]]
         } else if (sim$returnGeneratorMethod == "C") {
             temp <- calcChronologicalHist(iTrial, out$lengths[iTrial], sbiSub, sim$stockWt)
-            out$rateOfReturns[[iTrial]] <- temp$return
+            out$rateOfReturns[[iTrial]] <- temp$return + 1
             out$inflationHist[[iTrial]] <- temp$inflation
             histInflation <- out$inflationHist[[iTrial]]
         } else {
@@ -272,8 +272,10 @@ calcCFSub <- function(cf, sim, length, ageDeath1, ageDeath2, histInflation = 0) 
     if (startyr > (length + 1)) return(out)
     # Override inflation inputs if Chronological history or (Random history and
     #the override inflation input) is true
+    # if (sim$description == "Chrono") browser()
     if (sim$returnGeneratorMethod == "C" | (sim$returnGeneratorMethod == "H" & sim$overrideInflation)) {
-        inflationRates <- c(1, cumprod(histInflation))
+        # inflationRates <- c(1, cumprod(histInflation))[(startyr - 1):(endyr - 1)]
+        inflationRates <- c(1, cumprod(histInflation))[startyr:endyr]
     } else {
         if (cf$defaultInflationAdj) {
             inflationRates <- (1 + sim$defaultInflation) ^ ((startyr - 1):(endyr - 1))

@@ -171,31 +171,45 @@ getDistOfValuesByYear <- function(sim, probs = c(0.0, 0.05, 0.25, 0.50, 0.75, 0.
 
 #' Get the Distribution of a Series
 #'
-#' Intended to return summary statistics for series in the simulation such as
+#' Intended to produce summary statistics for series in the simulation such as
 #' rateOfReturns, agesDeath1 and such.  The geometric average makes sense to
-#' include for rateOfReturn and inflation, but not for ages.  If includeGeomAvg
-#' == TRUE, one will be added to each value for that calculation.
+#' include for rateOfReturn and inflation, but not for ages.  If isReturnSeries
+#' == TRUE, the returns and standard deviation will be showin in percent, not
+#' decimal.
 #'
 #' @param x Series for which to get the distribution
 #' @param probs numeric vector of probabilities with values in [0, 1]
-#' @param includeGeomAvg boolean to include geometric average
+#' @param isReturnSeries boolean if a return series. Will include geometric average
+#' and subtract 1 from the probs and summary items.
 #'
-#' @return list with nObs, quanitles associated with the probs, summary, and
-#' the sd (standard deviation)
+#' @return list with nObs - the number of observations;
+#' probs - the quanitles associated with the probs;
+#' summary - results of the summary function;
+#' sd - the (standard deviation); and,
+#' geomAvg the geometric average if isReturnSeries is TRUE
 #' @export
 #'
 #' @examples \dontrun{getDistribution(unlist(sim$simulation$rateOfReturns) - 1,
 #' includeGeomAvg = TRUE)}
 getDistribution <- function(x,
                             probs = c(0.0, 0.05, 0.25, 0.50, 0.75, 0.95, 1.0),
-                            includeGeomAvg = FALSE) {
+                            isReturnSeries = FALSE) {
     out <- list()
     out$nObs <- length(x)
     out$probs <- stats::quantile(x, probs, na.rm = TRUE)
     out$summary <- summary(x)
     out$sd <- stats::sd(x, na.rm = TRUE)
-    if (includeGeomAvg) {
-        out$geomAvg <- exp(mean(log(1 + x))) - 1
+    if (isReturnSeries) {
+        out$geomAvg <- 100 * (exp(mean(log(x))) - 1)
+        out$probs <- out$probs * 100 - 100
+        out$summary <- out$summary * 100 - 100
+        out$sd <- out$sd * 100
+
+
     }
+    out$dfProbs <- data.frame(Percentile = names(out$probs),
+                              Return = out$probs, row.names = NULL)
+    out$dfSummary <- data.frame(Statistic = names(out$summary),
+                                Return = as.numeric(out$summary), row.names = NULL)
     return(out)
 }
