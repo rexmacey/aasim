@@ -4,10 +4,12 @@
 \alias{chartValuesOverTime}
 \title{Values across Time vs Target Chart}
 \usage{
-chartValuesOverTime(sim)
+chartValuesOverTime(sim, logScale = FALSE)
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{logScale}{TRUE to display a log scale on the y-axis, FALSE to display a linear scale.}
 }
 \value{
 ggplot2 object

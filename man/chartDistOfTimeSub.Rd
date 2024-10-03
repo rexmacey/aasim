@@ -4,7 +4,7 @@
 \alias{chartDistOfTimeSub}
 \title{Helper function for the Distribution of Ages/Lengths Chart}
 \usage{
-chartDistOfTimeSub(rawData, gtitle, xtitle)
+chartDistOfTimeSub(rawData, gtitle, xtitle, showLegend = TRUE)
 }
 \arguments{
 \item{rawData}{A vector with the lengths of trials or the ages at death}
@@ -12,6 +12,8 @@ chartDistOfTimeSub(rawData, gtitle, xtitle)
 \item{gtitle}{Main title for the chart}
 
 \item{xtitle}{Title of x-axis}
+
+\item{showLegend}{TRUE to show the legend, FALSE to hide it.}
 }
 \value{
 Chart object. One panel.

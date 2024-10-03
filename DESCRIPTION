@@ -1,6 +1,6 @@
 Package: aasim
 Title: Asset Allocation Simulation
-Version: 0.0.0.9108
+Version: 0.0.0.9110
 Authors@R: person("Rex", "Macey", email = "rex@macey.us", role = c("aut", "cre"))
 Description: Applies Monte Carlo simulation to asset allocation.
 Depends: R (>= 3.5.0)
@@ -11,14 +11,14 @@ Suggests:
     testthat (>= 3.0.0),
     readxl (>= 1.4.3),
     tidyverse (>= 2.0.0),
-    ggplot2 (>= 3.5.1),
-    ggpubr (>= 0.6.0),
     dplyr (>= 1.1.4),
     scales (>= 1.3.0),
+    plotly (>= 4.10.1),
     knitr,
     rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 Imports: 
+    graphics,
     reshape2,
     stats
