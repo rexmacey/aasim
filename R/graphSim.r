@@ -5,13 +5,14 @@
 #'
 #' @param sim Simulation object after running simulate function
 #' @param vs Choices are 'T' for target or "Z' for zero
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return a ggplot object
 #' @export
 #'
 #' @examples \dontrun{chartSucessDonut(sim)}
-chartSuccessDonut <- function(sim, vs = "T") {
-  successStats <- getSuccessStats(sim)
+chartSuccessDonut <- function(sim, vs = "T", simResult = "simulation") {
+  successStats <- getSuccessStats(sim, simResult)
 
   # Create a data frame with Success and Failure counts
   vs <- toupper(substr(vs, 1, 1))
@@ -58,14 +59,15 @@ chartSuccessDonut <- function(sim, vs = "T") {
 #'
 #' @param sim Simulation object after running simulate function
 #' @param logScale TRUE to display a log scale on the y-axis, FALSE to display a linear scale.
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return ggplot2 object
 #' @export
 #'
 #' @examples \dontrun{chartValuesOverTime(sim)}
-chartValuesOverTime <- function(sim, logScale = FALSE) {
-    targetValues <- getTargetValues(sim)
-    data <- cbind(getDistOfValuesByYear(sim, c(0.05, 0.25, 0.50, 0.75, 0.95)), Target = getTargetValues(sim))
+chartValuesOverTime <- function(sim, logScale = FALSE, simResult = "simulation") {
+    targetValues <- getTargetValues(sim, simResult)
+    data <- cbind(getDistOfValuesByYear(sim, c(0.05, 0.25, 0.50, 0.75, 0.95), simResult), Target = getTargetValues(sim, simResult))
     # cols <- c("Median" = "red", "Target" = "black")
     # fills <- c("90%" = "lightblue", "50%" = "blue")
     # out <- ggplot(data, aes(x = Length)) +
@@ -112,26 +114,27 @@ chartValuesOverTime <- function(sim, logScale = FALSE) {
 #'
 #' @param sim Simulation object after running simulate function
 #' @param vs Choices are 'T' for target or "Z' for zero
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return ggplot2 object
 #' @export
 #'
 #' @examples \dontrun{(sim)}
-chartSuccessOverTime <- function(sim, vs = "T") {
+chartSuccessOverTime <- function(sim, vs = "T", simResult = "simulation") {
     if (toupper(substr(vs, 1, 1)) == "T") {
-        data1 <- getSuccessByLength(sim) %>% rename(Success = SuccessVsTargetCount) %>%
+        data1 <- getSuccessByLength(sim, simResult) %>% rename(Success = SuccessVsTargetCount) %>%
             mutate(PctSuccess = SuccessVsTargetPct , Failure = Frequency - Success) %>%
             select(Length, Failure, Success, PctSuccess)
-        data2 <- getSuccessByLength(sim) %>%
+        data2 <- getSuccessByLength(sim, simResult) %>%
             mutate(Cumulative = SuccessVsTargetCumPct) %>%
             select(Length, Cumulative)
         gtitle1 <- "Successes and Failures vs Target by Length of Trial"
         gtitle2 <- "Cumulative Success Rate vs Target by Length of Trial"
     } else {
-        data1 <- getSuccessByLength(sim) %>% rename(Success = SuccessVs0Count) %>%
+        data1 <- getSuccessByLength(sim, simResult) %>% rename(Success = SuccessVs0Count) %>%
             mutate(PctSuccess = SuccessVs0Pct , Failure = Frequency - Success) %>%
             select(Length, Failure, Success, PctSuccess)
-        data2 <- getSuccessByLength(sim) %>%
+        data2 <- getSuccessByLength(sim, simResult) %>%
             mutate(Cumulative = SuccessVs0CumPct) %>%
             select(Length, Cumulative)
         gtitle1 <- "Successes and Failures vs $0 by Length of Trial"
@@ -250,6 +253,7 @@ chartDistOfTimeSub <- function(rawData, gtitle, xtitle, showLegend = TRUE) {
 #' This chart shows how long trials last.
 #'
 #' @param sim Simulation object after running simulate function
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return Chart object.  If nPersons is 0 or 1 there will be one panel representing
 #' the lengths of the trials or the ages of Person 1.  If nPersons is 2, there will
@@ -258,9 +262,9 @@ chartDistOfTimeSub <- function(rawData, gtitle, xtitle, showLegend = TRUE) {
 #' @export
 #'
 #' @examples \dontrun{chartDistOfTime(sim)}
-chartDistOfTime <- function(sim) {
+chartDistOfTime <- function(sim, simResult = "simulation") {
     if (nPersons.sim(sim) == 0 | sim$returnGeneratorMethod == "C") {
-        return(chartDistOfTimeSub(sim$simulation$lengths, "Distribution of Lengths of Trials",
+        return(chartDistOfTimeSub(sim[[simResult]]$lengths, "Distribution of Lengths of Trials",
                                   "Length (Years)", TRUE))
     }
     makeName <- function(name, initials, num) {
@@ -271,17 +275,17 @@ chartDistOfTime <- function(sim) {
     }
     if (nPersons.sim(sim) == 1) {
         gtitle <- makeName(sim$persons[[1]]$name, sim$persons[[1]]$initials, 1)
-        return(chartDistOfTimeSub(sim$simulation$agesDeath1, gtitle,
+        return(chartDistOfTimeSub(sim[[simResult]]$agesDeath1, gtitle,
                                   "Age (Years)", TRUE))
     }
     if (nPersons.sim(sim) == 2) {
         gtitle <- makeName(sim$persons[[1]]$name, sim$persons[[1]]$initials, 1)
-        p1 <- chartDistOfTimeSub(sim$simulation$agesDeath1, gtitle,
+        p1 <- chartDistOfTimeSub(sim[[simResult]]$agesDeath1, gtitle,
                                  "Age (Years)", FALSE)
         gtitle <- makeName(sim$persons[[2]]$name, sim$persons[[2]]$initials, 2)
-        p2 <- chartDistOfTimeSub(sim$simulation$agesDeath2, gtitle,
+        p2 <- chartDistOfTimeSub(sim[[simResult]]$agesDeath2, gtitle,
                                  "Age (Years)", FALSE)
-        p3 <- chartDistOfTimeSub(sim$simulation$lengths, "Distribution of Lengths of Trials",
+        p3 <- chartDistOfTimeSub(sim[[simResult]]$lengths, "Distribution of Lengths of Trials",
                                  "Length (Years)", TRUE)
         # return(ggarrange(p1, p2, p3, ncol = 1, nrow = 3))
         out <- subplot(p1, p2, p3, nrows = 3, shareX = FALSE, titleX = TRUE, titleY = TRUE)
@@ -297,13 +301,14 @@ chartDistOfTime <- function(sim) {
 #' @param sim Simulation object
 #' @param sampleSize Size of random sample
 #' @param logScale True to display the y-axis in log format
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return Chart object (plotly)
 #' @export
 #'
 #' @examples \dontrun{chartRandomSmapleTrialsPortfolioValues(sim, sampleSize, logScale))}
-chartRandomSampleTrialsPortfolioValues <- function(sim, sampleSize, logScale = TRUE) {
-    idxSmpl <- sample(1:length(sim$simulation$portfolioValues), sampleSize)
+chartRandomSampleTrialsPortfolioValues <- function(sim, sampleSize, logScale = TRUE, simResult = "simulation") {
+    idxSmpl <- sample(1:length(sim[[simResult]]$portfolioValues), sampleSize)
     return(chartSampleTrialsPortfolioValues(sim, idxSmpl, logScale))
 }
 
@@ -317,20 +322,21 @@ chartRandomSampleTrialsPortfolioValues <- function(sim, sampleSize, logScale = T
 #' @param sim Simulation object
 #' @param sampleIndex Vector of indices of the trials to plot.
 #' @param logScale True to display the y-axis in log format
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return Chart object (plotly)
 #' @export
 #'
 #' @examples \dontrun{chartSampleTrialsPortfolioValues(sim, sampleIndex, logScale)}
-chartSampleTrialsPortfolioValues <- function(sim, sampleIndex, logScale = TRUE) {
+chartSampleTrialsPortfolioValues <- function(sim, sampleIndex, logScale = TRUE, simResult = "simulation") {
     # convert_to_hex <- function(color) {
     #     rgb_vals <- col2rgb(color)
     #     rgb(rgb_vals[1], rgb_vals[2], rgb_vals[3], maxColorValue = 255)
     # }
-    smpl <- sim$simulation$portfolioValues[sampleIndex]
+    smpl <- sim[[simResult]]$portfolioValues[sampleIndex]
     smplLengths <- sapply(smpl, length)
     max_length <- max(smplLengths)
-    smplSuccessVsTarget <- getSuccessStats(sim)$successVsTargetByTrial[sampleIndex] # T/F by trial
+    smplSuccessVsTarget <- getSuccessStats(sim, simResult)$successVsTargetByTrial[sampleIndex] # T/F by trial
     padded_smpl <- lapply(smpl, function(x) {
         length(x) <- max_length
         return(x)
@@ -352,7 +358,7 @@ chartSampleTrialsPortfolioValues <- function(sim, sampleIndex, logScale = TRUE) 
                      data.frame(ID = rep(0, max_length),
                                 Color = rep("blue", max_length),
                                 Time = 0:(max_length - 1),
-                                Wealth = getTargetValues(sim)[1:max_length]))
+                                Wealth = getTargetValues(sim, simResult)[1:max_length]))
 
     if (logScale) {
         df_long[df_long$Wealth < 1, "Wealth"] <- log10(10)

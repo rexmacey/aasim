@@ -4,10 +4,12 @@
 \alias{chartDistOfTime}
 \title{Distribution of Ages/Lengths Chart}
 \usage{
-chartDistOfTime(sim)
+chartDistOfTime(sim, simResult = "simulation")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 Chart object.  If nPersons is 0 or 1 there will be one panel representing

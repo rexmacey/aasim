@@ -4,10 +4,12 @@
 \alias{getSuccessStats}
 \title{Get Success Statistics}
 \usage{
-getSuccessStats(sim)
+getSuccessStats(sim, simResult = "simulation")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 list

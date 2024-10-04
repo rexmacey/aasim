@@ -4,7 +4,12 @@
 \alias{chartRandomSampleTrialsPortfolioValues}
 \title{Chart a Sample of the Trials (Wealth Over Time)}
 \usage{
-chartRandomSampleTrialsPortfolioValues(sim, sampleSize, logScale = TRUE)
+chartRandomSampleTrialsPortfolioValues(
+  sim,
+  sampleSize,
+  logScale = TRUE,
+  simResult = "simulation"
+)
 }
 \arguments{
 \item{sim}{Simulation object}
@@ -12,6 +17,8 @@ chartRandomSampleTrialsPortfolioValues(sim, sampleSize, logScale = TRUE)
 \item{sampleSize}{Size of random sample}
 
 \item{logScale}{True to display the y-axis in log format}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 Chart object (plotly)

@@ -13,8 +13,11 @@
 #'
 #' @examples \dontrun{simulateWealth(sim)}
 simulateWealth <- function(sim) {
-    sbiSub <- sbi[sbi$Month >= sim$minDate & sbi$Month <= sim$maxDate,]
-    # to do
+    result <- initializeSimulation(sim)
+    sim <- result$sim
+    sbiSub <- result$sbiSub
+    out <- result$out
+
     if (sim$returnGeneratorMethod == "C") {
         if (nPersons.sim(sim) >= 1) {
             idx <- which(sim$cf$startType %in% c("p1death", "p2death", "1stdeath", "2nddeath"))
@@ -25,15 +28,7 @@ simulateWealth <- function(sim) {
             sim$cf[idx, "end"] <- sim$length
         }
     }
-    set.seed(sim$seed)
-    sim <- calcAgesForSimulation(sim)
-    out <- getHorizons.sim(sim)
-    out$portfolioValues <- list()
-    out$rateOfReturns <- list()
-    out$inflationHist <- list()
-    out$cashFlows <- list()
-    out$irr <- numeric(sim$nTrials)
-    out$probSuccess <- as.numeric(rep(NA, sim$nTrials)) # only with RGM = "S"
+
     for (iTrial in 1:sim$nTrials) {
         out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
         if (sim$returnGeneratorMethod == "S") {
@@ -73,10 +68,140 @@ simulateWealth <- function(sim) {
             }
         }
     }
-    out$runDate <- Sys.Date()
+    class(out) <- "simResult"
     return(out)
 }
 
+initializeSimulation <- function(sim) {
+    sbiSub <- sbi[sbi$Month >= sim$minDate & sbi$Month <= sim$maxDate,]
+    set.seed(sim$seed)
+    sim <- calcAgesForSimulation(sim) # adds curAge (nearest birthday) to person(s)
+    out <- getHorizons.sim(sim)
+    out$portfolioValues <- list()
+    out$rateOfReturns <- list()
+    out$inflationHist <- list()
+    out$cashFlows <- list()
+    out$irr <- numeric(sim$nTrials)
+    out$probSuccess <- as.numeric(rep(NA, sim$nTrials)) # only with RGM = "S"
+    out$runDate <- Sys.Date()
+    return(list(sim = sim, sbiSub = sbiSub, out = out))
+}
+
+simulateSHC <- function(sim) {
+    out <- list()
+    out$simS <- simulateMethodH(sim)
+    out$simH <- simulateMethodH(sim)
+    out$simC <- simulateMethodH(sim)
+    return(out)
+}
+
+simulateMethodS <- function(sim) {
+    sim$returnGeneratorMethod <- "S"
+    result <- initializeSimulation(sim)
+    sim <- result$sim
+    sbiSub <- result$sbiSub
+    out <- result$out
+    for (iTrial in 1:sim$nTrials) {
+        out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
+        out$rateOfReturns[[iTrial]] <- 1 + calcRandReturns(out$lengths[iTrial], sim$ror, sim$stdDev, 1)
+        histInflation <- 0
+        out$cashFlows[[iTrial]] <- calcCF(sim,
+                                          out$lengths[iTrial],
+                                          out$agesDeath1[iTrial],
+                                          out$agesDeath2[iTrial],
+                                          histInflation)
+        out$cashFlows[[iTrial]][1] <- sim$startValue + out$cashFlows[[iTrial]][1]
+        out$irr[iTrial] <- calcIRR(out$cashFlows[[iTrial]])
+        out$probSuccess[iTrial] <- AA_Prob(out$irr[iTrial], sim$ror, sim$stdDev, out$lengths[iTrial])
+        out$portfolioValues[[iTrial]][1] <- out$cashFlows[[iTrial]][1]
+        if (out$lengths[iTrial] < 1) next
+        for (i in 2:(out$lengths[iTrial] + 1)) {
+            out$portfolioValues[[iTrial]][i] <- out$portfolioValues[[iTrial]][i - 1] * out$rateOfReturns[[iTrial]][i - 1] + out$cashFlows[[iTrial]][i]
+            if (out$portfolioValues[[iTrial]][i] <= 0) {
+                out$portfolioValues[[iTrial]][i] <- 0
+                break
+            }
+        }
+    }
+    class(out) <- "simResult"
+    return(out)
+}
+
+simulateMethodH <- function(sim) {
+    sim$returnGeneratorMethod <- "H"
+    result <- initializeSimulation(sim)
+    sim <- result$sim
+    sbiSub <- result$sbiSub
+    out <- result$out
+
+    for (iTrial in 1:sim$nTrials) {
+        out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
+        temp <- calcRandHistReturns(out$lengths[iTrial], sim$stockWt, sim$nConsecMonths, sim$retAdj, sbiSub)
+        out$rateOfReturns[[iTrial]] <- temp$return
+        out$inflationHist[[iTrial]] <- temp$inflation
+        histInflation <- out$inflationHist[[iTrial]]
+        out$cashFlows[[iTrial]] <- calcCF(sim,
+                                          out$lengths[iTrial],
+                                          out$agesDeath1[iTrial],
+                                          out$agesDeath2[iTrial],
+                                          histInflation)
+        out$cashFlows[[iTrial]][1] <- sim$startValue + out$cashFlows[[iTrial]][1]
+        out$irr[iTrial] <- calcIRR(out$cashFlows[[iTrial]])
+        out$portfolioValues[[iTrial]][1] <- out$cashFlows[[iTrial]][1]
+        if (out$lengths[iTrial] < 1) next
+        for (i in 2:(out$lengths[iTrial] + 1)) {
+            out$portfolioValues[[iTrial]][i] <- out$portfolioValues[[iTrial]][i - 1] * out$rateOfReturns[[iTrial]][i - 1] + out$cashFlows[[iTrial]][i]
+            if (out$portfolioValues[[iTrial]][i] <= 0) {
+                out$portfolioValues[[iTrial]][i] <- 0
+                break
+            }
+        }
+    }
+    class(out) <- "simResult"
+    return(out)
+}
+
+simulateMethodC <- function(sim) {
+    sim$returnGeneratorMethod <- "C"
+    result <- initializeSimulation(sim)
+    sim <- result$sim
+    sbiSub <- result$sbiSub
+    out <- result$out
+    if (nPersons.sim(sim) >= 1) {
+        idx <- which(sim$cf$startType %in% c("p1death", "p2death", "1stdeath", "2nddeath"))
+        sim$cf[idx, "startType"] <- "yr"
+        sim$cf[idx, "start"] <- sim$length
+        idx <- which(sim$cf$endType %in% c("p1death", "p2death", "1stdeath", "2nddeath"))
+        sim$cf[idx, "endType"] <- "yr"
+        sim$cf[idx, "end"] <- sim$length
+    }
+    for (iTrial in 1:sim$nTrials) {
+        out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
+        temp <- calcChronologicalHist(iTrial, out$lengths[iTrial], sbiSub, sim$stockWt)
+        out$rateOfReturns[[iTrial]] <- temp$return + 1
+        out$inflationHist[[iTrial]] <- temp$inflation
+        histInflation <- out$inflationHist[[iTrial]]
+
+        out$cashFlows[[iTrial]] <- calcCF(sim,
+                                          out$lengths[iTrial],
+                                          out$agesDeath1[iTrial],
+                                          out$agesDeath2[iTrial],
+                                          histInflation)
+        out$cashFlows[[iTrial]][1] <- sim$startValue + out$cashFlows[[iTrial]][1]
+        out$irr[iTrial] <- calcIRR(out$cashFlows[[iTrial]])
+        out$portfolioValues[[iTrial]][1] <- out$cashFlows[[iTrial]][1]
+        if (out$lengths[iTrial] < 1) next
+        for (i in 2:(out$lengths[iTrial] + 1)) {
+            out$portfolioValues[[iTrial]][i] <- out$portfolioValues[[iTrial]][i - 1] * out$rateOfReturns[[iTrial]][i - 1] + out$cashFlows[[iTrial]][i]
+            if (out$portfolioValues[[iTrial]][i] <= 0) {
+                out$portfolioValues[[iTrial]][i] <- 0
+                break
+            }
+        }
+    }
+    class(out) <- "simResult"
+    return(out)
+}
 #' Get Time Horizons
 #'
 #' This will return the lengths of the cash flow and portfolio values vectors.
@@ -90,7 +215,6 @@ simulateWealth <- function(sim) {
 #'
 #' @examples \dontrun{getHorizons(sim1)}
 getHorizons.sim <- function(sim) {
-    #source("generateAgesAtDeath.r")
     out <- list()
     out$lengths <- NA
     out$agesDeath1 <- NA
@@ -98,6 +222,12 @@ getHorizons.sim <- function(sim) {
     if (toupper(substr(sim$lengthType, 1, 1) == "F")) {
         # used fixed length
         out$lengths <- rep(sim$length, sim$nTrials)
+        if (nPersons.sim(sim) >= 1) {
+            out$agesDeath1 <- rep(sim$persons[[1]]$curAge + sim$length, sim$nTrials)
+        }
+        if (nPersons.sim(sim) >= 2) {
+            out$agesDeath2 <- rep(sim$persons[[2]]$curAge + sim$length, sim$nTrials)
+        }
         return(out)
     }
     if (nPersons.sim(sim) == 0) {
@@ -123,17 +253,10 @@ getHorizons.sim <- function(sim) {
             sim$persons[[2]]$mort.adj.years,
             TRUE
         )
-        # if (sim$nTrials > 1) {
-        #     out$agesDeath2 <- sample(out$agesDeath2, sim$nTrials)    # randomly order 2nd deaths
-        # }
         out$lengths <- apply(
-            cbind(
-                out$agesDeath1 - sim$persons[[1]]$curAge,
-                out$agesDeath2 - sim$persons[[2]]$curAge
-            ),
-            1,
-            max
-        )
+            cbind(out$agesDeath1 - sim$persons[[1]]$curAge,
+                  out$agesDeath2 - sim$persons[[2]]$curAge),
+            1, max)
     } else {
         out$lengths <- out$agesDeath1 - sim$persons[[1]]$curAge
     }

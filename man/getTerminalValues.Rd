@@ -4,10 +4,12 @@
 \alias{getTerminalValues}
 \title{Get Terminal Values of Each Trial}
 \usage{
-getTerminalValues(sim)
+getTerminalValues(sim, simResult = "simulation")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 vector of values

@@ -4,10 +4,12 @@
 \alias{getMaxLength}
 \title{Get maximum length of all trials}
 \usage{
-getMaxLength(sim)
+getMaxLength(sim, simResult = "simulation")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 integer

@@ -4,10 +4,12 @@
 \alias{getSuccessByLength}
 \title{Get Success Statistics by Length of Trial}
 \usage{
-getSuccessByLength(sim)
+getSuccessByLength(sim, simResult = "simulation")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 data frame

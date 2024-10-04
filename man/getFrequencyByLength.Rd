@@ -4,10 +4,12 @@
 \alias{getFrequencyByLength}
 \title{Get Frequency of Lengths}
 \usage{
-getFrequencyByLength(sim)
+getFrequencyByLength(sim, simResult = "simulation")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 data frame

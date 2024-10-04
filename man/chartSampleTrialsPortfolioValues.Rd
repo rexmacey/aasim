@@ -4,7 +4,12 @@
 \alias{chartSampleTrialsPortfolioValues}
 \title{Chart a Sample of the Trials (Wealth Over Time) Given a Vector of Indices}
 \usage{
-chartSampleTrialsPortfolioValues(sim, sampleIndex, logScale = TRUE)
+chartSampleTrialsPortfolioValues(
+  sim,
+  sampleIndex,
+  logScale = TRUE,
+  simResult = "simulation"
+)
 }
 \arguments{
 \item{sim}{Simulation object}
@@ -12,6 +17,8 @@ chartSampleTrialsPortfolioValues(sim, sampleIndex, logScale = TRUE)
 \item{sampleIndex}{Vector of indices of the trials to plot.}
 
 \item{logScale}{True to display the y-axis in log format}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 Chart object (plotly)

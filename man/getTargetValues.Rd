@@ -4,10 +4,12 @@
 \alias{getTargetValues}
 \title{Get Target Values}
 \usage{
-getTargetValues(sim)
+getTargetValues(sim, simResult = "simulation")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 vector of values

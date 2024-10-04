@@ -1,25 +1,27 @@
 #' Get maximum length of all trials
 #'
 #' @param sim Simulation object after running simulate function
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return integer
 #' @export
 #'
 #' @examples \dontrun{getMaxLength(sim)}
-getMaxLength <- function(sim) {
-    return(max(sim$simulation$lengths))
+getMaxLength <- function(sim, simResult = "simulation") {
+    return(max(sim[[simResult]]$lengths))
 }
 
 #' Get minimum length of all trials
 #'
 #' @param sim Simulation object after running simulate function
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return integer
 #' @export
 #'
 #' @examples \dontrun{getMinLength(sim)}
-getMinLength <- function(sim) {
-    return(min(sim$simulation$lengths))
+getMinLength <- function(sim, simResult = "simulation") {
+    return(min(sim[[simResult]]$lengths))
 }
 #' Get Target Values
 #'
@@ -28,13 +30,14 @@ getMinLength <- function(sim) {
 #' trials to determine success or failure.
 #'
 #' @param sim Simulation object after running simulate function
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return vector of values
 #' @export
 #'
 #' @examples \dontrun{getTargetValues(sim)}
-getTargetValues <- function(sim) {
-  maxLength <- getMaxLength(sim)
+getTargetValues <- function(sim, simResult = "simulation") {
+  maxLength <- getMaxLength(sim, simResult)
   out <- rep(sim$targetValue, maxLength + 1)
   if (sim$targetValueIsReal) {
       out <- out * (1 + sim$defaultInflation) ^ (0:maxLength)
@@ -49,15 +52,15 @@ getTargetValues <- function(sim) {
 #' success or failure.
 #'
 #' @param sim Simulation object after running simulate function
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return vector of values
 #' @export
 #'
 #' @examples \dontrun{getTerminalValues(sim)}
-getTerminalValues <- function(sim) {
-    return(sapply(1:sim$nTrials, function(x) sim$simulation$portfolioValues[[x]][sim$simulation$lengths[[x]] + 1]))
+getTerminalValues <- function(sim, simResult = "simulation") {
+    return(sapply(1:sim$nTrials, function(x) sim[[simResult]]$portfolioValues[[x]][sim[[simResult]]$lengths[[x]] + 1]))
 }
-
 #' Get Success Statistics
 #'
 #' Success vs target is defined as a trial with a terminal value >= the
@@ -71,14 +74,15 @@ getTerminalValues <- function(sim) {
 #' numeric percentage success vs 0
 #'
 #' @param sim Simulation object after running simulate function
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return list
 #' @export
 #'
 #' @examples \dontrun{getSuccessStats(sim)}
-getSuccessStats <- function(sim) {
-    targets <- getTargetValues(sim)[sim$simulation$lengths + 1]
-    terminalValues <- getTerminalValues(sim)
+getSuccessStats <- function(sim, simResult = "simulation") {
+    targets <- getTargetValues(sim, simResult)[sim[[simResult]]$lengths + 1]
+    terminalValues <- getTerminalValues(sim, simResult)
     out <- list()
     out$successVsTargetByTrial <- terminalValues >= targets
     out$successVs0ByTrial <- terminalValues > 0
@@ -95,13 +99,14 @@ getSuccessStats <- function(sim) {
 #' (number of trials) of that length.
 #'
 #' @param sim Simulation object after running simulate function
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return data frame
 #' @export
 #'
 #' @examples \dontrun{getFrequencyByLength(sim)}
-getFrequencyByLength <- function(sim) {
-    out <- as.data.frame(table(sim$simulation$lengths))
+getFrequencyByLength <- function(sim, simResult = "simulation") {
+    out <- as.data.frame(table(sim[[simResult]]$lengths))
     names(out) <- c("Length", "Frequency")
     out$Length <- as.numeric(as.character(out$Length))
     return(out)
@@ -115,19 +120,20 @@ getFrequencyByLength <- function(sim) {
 #' cumulative counts and percentages.
 #'
 #' @param sim Simulation object after running simulate function
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return data frame
 #' @export
 #'
 #' @examples \dontrun{getSuccessByLength(sim)}
-getSuccessByLength <- function(sim) {
-    successStats <- getSuccessStats(sim)
-    out <- getFrequencyByLength(sim)
+getSuccessByLength <- function(sim, simResult = "simulation") {
+    successStats <- getSuccessStats(sim, simResult)
+    out <- getFrequencyByLength(sim, simResult)
     out$SuccessVsTargetCount <- NA
     out$SuccessVs0Count <- NA
     for (i in 1:nrow(out)) {
         l <- out$Length[i]
-        idx <- which(sim$simulation$lengths == l)
+        idx <- which(sim[[simResult]]$lengths == l)
         out$SuccessVsTargetCount[i] <- sum(successStats$successVsTargetByTrial[idx])
         out$SuccessVs0Count[i] <- sum(successStats$successVs0ByTrial[idx])
     }
@@ -149,17 +155,18 @@ getSuccessByLength <- function(sim) {
 #' @param sim Simulation object after running simulate function
 #' @param probs numeric vector of probabilities with values [0-1]. The
 #' default is c(0.0, 0.05, 0.25, 0.50, 0.75, 0.95, 1.0).
+#' @param simResult Name of item in sim with results (class = 'simResult')
 #'
 #' @return data frame
 #' @export
 #'
 #' @examples \dontrun{getDistOfValuesByYear(sim)}
-getDistOfValuesByYear <- function(sim, probs = c(0.0, 0.05, 0.25, 0.50, 0.75, 0.95, 1.0)) {
-    maxLength <- getMaxLength(sim)
+getDistOfValuesByYear <- function(sim, probs = c(0.0, 0.05, 0.25, 0.50, 0.75, 0.95, 1.0), simResult = "simulation") {
+    maxLength <- getMaxLength(sim, simResult)
     out <- matrix(NA, nrow = 1 + maxLength, ncol = length(probs) + 2)
     out[, 1] <- 0:maxLength
     for (i in 0:maxLength) {
-        values <- sapply(1:sim$nTrials, function(x) sim$simulation$portfolioValues[[x]][i + 1])
+        values <- sapply(1:sim$nTrials, function(x) sim[[simResult]]$portfolioValues[[x]][i + 1])
         out[i + 1, 2] <- sim$nTrials - sum(is.na(values))
         out[i + 1, 3:(length(probs) + 2)] <- stats::quantile(values, probs, na.rm = TRUE)
     }
@@ -211,5 +218,25 @@ getDistribution <- function(x,
                               Return = out$probs, row.names = NULL)
     out$dfSummary <- data.frame(Statistic = names(out$summary),
                                 Return = as.numeric(out$summary), row.names = NULL)
+    return(out)
+}
+
+#' Identify the Items in a List with a Class Name
+#'
+#' This will identify all the items in a list that are of a class named
+#' nameClass.  The result is a list with two items.  Indices contains the
+#' indices (locations) of the items, and names contains the name.
+#'
+#' @param sim Simulation object
+#' @param nameClass name of class
+#'
+#' @return list with two items. See description.
+#' @export
+#'
+#' @examples \dontrun{whichItemsClassName(sim, "simResult")}
+whichItemsClassName <- function(sim, nameClass = "simResult") {
+    out <- list()
+    out$indices <- which(sapply(sim, class) == nameClass)
+    out$names <- names(sim[out$indices])
     return(out)
 }

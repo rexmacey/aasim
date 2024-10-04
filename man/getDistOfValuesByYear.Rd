@@ -4,13 +4,19 @@
 \alias{getDistOfValuesByYear}
 \title{Get the Distribution of Value by Year}
 \usage{
-getDistOfValuesByYear(sim, probs = c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1))
+getDistOfValuesByYear(
+  sim,
+  probs = c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
+  simResult = "simulation"
+)
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
 
 \item{probs}{numeric vector of probabilities with values [0-1]. The
 default is c(0.0, 0.05, 0.25, 0.50, 0.75, 0.95, 1.0).}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 data frame

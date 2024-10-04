@@ -4,10 +4,12 @@
 \alias{getMinLength}
 \title{Get minimum length of all trials}
 \usage{
-getMinLength(sim)
+getMinLength(sim, simResult = "simulation")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 integer

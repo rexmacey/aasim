@@ -4,12 +4,14 @@
 \alias{chartSuccessOverTime}
 \title{Success across Time Chart}
 \usage{
-chartSuccessOverTime(sim, vs = "T")
+chartSuccessOverTime(sim, vs = "T", simResult = "simulation")
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
 
 \item{vs}{Choices are 'T' for target or "Z' for zero}
+
+\item{simResult}{Name of item in sim with results (class = 'simResult')}
 }
 \value{
 ggplot2 object

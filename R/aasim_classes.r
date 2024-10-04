@@ -349,10 +349,15 @@ print_sim_persons <- function(sim) {
 
 print_sim_results <- function(sim) {
     out <- list()
-    out$SuccessStats <- getSuccessStats(sim)
-    printSub("Success Rate vs Target", paste0(round(out$SuccessStats$vsTargetPct), "%"))
-    printSub("Success Rate vs $0", paste0(round(out$SuccessStats$vs0Pct), "%"))
-    chartSuccessDonut(sim, "T")
-    chartSuccessDonut(sim, "Z")
-    chartValuesOverTime(sim)
+    simResultNames <- whichItemsClassName(sim)$names
+    for (i in 1:length(simResultNames)) {
+        if (length(simResultNames) > 1) cat("Results for ", simResultNames[i], "\n")
+        out$SuccessStats <- getSuccessStats(sim, simResultNames[i])
+        printSub("Success Rate vs Target", paste0(round(out$SuccessStats$vsTargetPct), "%"))
+        printSub("Success Rate vs $0", paste0(round(out$SuccessStats$vs0Pct), "%"))
+        chartSuccessDonut(sim, "T", simResultNames[i])
+        chartSuccessDonut(sim, "Z", simResultNames[i])
+        chartValuesOverTime(sim, FALSE, simResultNames[i])
+    }
+
 }
