@@ -4,12 +4,14 @@
 \alias{getTerminalValues}
 \title{Get Terminal Values of Each Trial}
 \usage{
-getTerminalValues(sim, simResult = "simulation")
+getTerminalValues(sim, simResult = "simulation", inflationAdjusted = FALSE)
 }
 \arguments{
 \item{sim}{Simulation object after running simulate function}
 
 \item{simResult}{Name of item in sim with results (class = 'simResult')}
+
+\item{inflationAdjusted}{TRUE to adjust portfolio values by inflation, otherwise FALSE.}
 }
 \value{
 vector of values

@@ -53,13 +53,20 @@ getTargetValues <- function(sim, simResult = "simulation") {
 #'
 #' @param sim Simulation object after running simulate function
 #' @param simResult Name of item in sim with results (class = 'simResult')
+#' @param inflationAdjusted TRUE to adjust portfolio values by inflation, otherwise FALSE.
 #'
 #' @return vector of values
 #' @export
 #'
 #' @examples \dontrun{getTerminalValues(sim)}
-getTerminalValues <- function(sim, simResult = "simulation") {
-    return(sapply(1:sim$nTrials, function(x) sim[[simResult]]$portfolioValues[[x]][sim[[simResult]]$lengths[[x]] + 1]))
+getTerminalValues <- function(sim, simResult = "simulation", inflationAdjusted = FALSE) {
+    pv <- sim[[simResult]]$portfolioValues
+    if (inflationAdjusted) {
+        pv <- inflationAdjustPortfolioValues(sim, simResult)
+    } else {
+        pv <- sim[[simResult]]$portfolioValues
+    }
+    return(sapply(1:sim[[simResult]]$nTrials, function(x) pv[[x]][sim[[simResult]]$lengths[[x]] + 1]))
 }
 #' Get Success Statistics
 #'
@@ -88,8 +95,8 @@ getSuccessStats <- function(sim, simResult = "simulation") {
     out$successVs0ByTrial <- terminalValues > 0
     out$vsTargetCount <- sum(out$successVsTarget)
     out$vs0Count <- sum(out$successVs0)
-    out$vsTargetPct <- 100 * (out$vsTargetCount / sim$nTrials)
-    out$vs0Pct <- 100 * (out$vs0Count / sim$nTrials)
+    out$vsTargetPct <- 100 * (out$vsTargetCount / sim[[simResult]]$nTrials)
+    out$vs0Pct <- 100 * (out$vs0Count / sim[[simResult]]$nTrials)
     return(out)
 }
 
@@ -156,18 +163,25 @@ getSuccessByLength <- function(sim, simResult = "simulation") {
 #' @param probs numeric vector of probabilities with values [0-1]. The
 #' default is c(0.0, 0.05, 0.25, 0.50, 0.75, 0.95, 1.0).
 #' @param simResult Name of item in sim with results (class = 'simResult')
+#' @param inflationAdjusted TRUE to adjust portfolio values by inflation, otherwise FALSE.
 #'
 #' @return data frame
 #' @export
 #'
 #' @examples \dontrun{getDistOfValuesByYear(sim)}
-getDistOfValuesByYear <- function(sim, probs = c(0.0, 0.05, 0.25, 0.50, 0.75, 0.95, 1.0), simResult = "simulation") {
+getDistOfValuesByYear <- function(sim, probs = c(0.0, 0.05, 0.25, 0.50, 0.75, 0.95, 1.0),
+                                  simResult = "simulation", inflationAdjusted = TRUE) {
     maxLength <- getMaxLength(sim, simResult)
     out <- matrix(NA, nrow = 1 + maxLength, ncol = length(probs) + 2)
     out[, 1] <- 0:maxLength
+    if (inflationAdjusted) {
+        pv <- inflationAdjustPortfolioValues(sim, simResult)
+    } else {
+        pv <- sim[[simResult]]$portfolioValues
+    }
     for (i in 0:maxLength) {
-        values <- sapply(1:sim$nTrials, function(x) sim[[simResult]]$portfolioValues[[x]][i + 1])
-        out[i + 1, 2] <- sim$nTrials - sum(is.na(values))
+        values <- sapply(1:sim[[simResult]]$nTrials, function(x) pv[[x]][i + 1])
+        out[i + 1, 2] <- sim[[simResult]]$nTrials - sum(is.na(values))
         out[i + 1, 3:(length(probs) + 2)] <- stats::quantile(values, probs, na.rm = TRUE)
     }
     out <- as.data.frame(out)
@@ -236,7 +250,31 @@ getDistribution <- function(x,
 #' @examples \dontrun{whichItemsClassName(sim, "simResult")}
 whichItemsClassName <- function(sim, nameClass = "simResult") {
     out <- list()
-    out$indices <- which(sapply(sim, class) == nameClass)
+    out$indices <- which(sapply(sim, function(x) nameClass %in% class(x)))
     out$names <- names(sim[out$indices])
+    return(out)
+}
+
+#' Inflation Adjust Portfolio Values
+#'
+#' @param sim simulation object
+#' @param simResult Name of item in sim with results (class = 'simResult')
+#'
+#' @return List same size as portfolioValues
+#' @export
+#'
+#' @examples \dontrun{inflationAdjustPortfolioValues(sim, simResult)}
+inflationAdjustPortfolioValues <- function(sim, simResult) {
+    pv <- sim[[simResult]]$portfolioValues
+    infl <- sim[[simResult]]$inflationHist
+    if (length(infl) == 0) {
+        maxLen <- getMaxLength(sim, simResult)
+        disc <- (1 + sim$defaultInflation) ^ (0:maxLen)
+        out <- lapply(pv, function(x) x / disc[1:length(x)])
+    } else {
+        if (length(pv) != length(infl)) stop("Length of portfolioValues != length of inflationHist")
+        disc <- lapply(infl, function(x) cumprod(c(1, x)))
+        out <- lapply(1:length(pv), function(x) pv[[x]]/disc[[x]])
+    }
     return(out)
 }

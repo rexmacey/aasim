@@ -56,16 +56,16 @@ simClass <-
             sim[["nTrials"]] <- tmp - length * 12 + 1
             sim[["lengthType"]] <- "F"
             sim[["overrideInflation"]] <- TRUE # always use hist inflation for chronological history
-            sim[["retAdj"]] <- 0
+            # sim[["retAdj"]] <- 0
         } else {
             sim[["nTrials"]] <- nTrials
             sim[["lengthType"]] <- lengthType
             if (returnGeneratorMethod == "H") {
                 sim[["overrideInflation"]] <- overrideInflation
-                sim[["retAdj"]] <- retAdj
+                # sim[["retAdj"]] <- retAdj
             } else {
                 sim[["overrideInflation"]] <- FALSE # when using statistical
-                sim[["retAdj"]] <- 0
+                # sim[["retAdj"]] <- 0
             }
         }
         sim[["startValue"]] <- startValue
@@ -78,14 +78,14 @@ simClass <-
         sim[["targetValueIsReal"]] <- targetValueIsReal
         sim[["stockWt"]] <- stockWt
         sim[["nConsecMonths"]] <- nConsecMonths
-
+        sim[["retAdj"]] <- retAdj
         sim[["minDate"]] <- minDate
         sim[["maxDate"]] <- maxDate
         sim[["asOfDate"]] <- asOfDate
         sim[["returnGeneratorMethod"]] <- toupper(returnGeneratorMethod)
         sim[["cf"]] <- initializeCF()
         sim[["persons"]] <- list()
-        class(sim) <- "sim"
+        class(sim) <- c("sim", class(sim))
         return(sim)
     }
 
@@ -258,13 +258,15 @@ print.sim <- function(x, ...) {
         cat("\nCash Flows\n")
         print_sim_cf(x$cf)
     }
-    if (nPersons.sim(x) >= 1){
+    if (nPersons.sim(x) >= 1) {
         cat("\nPersons\n")
         print_sim_persons(x)
     }
     # print results if available
-    blnResultsAvailable <- "simulation" %in% names(x)
-    if (blnResultsAvailable) {
+    simResultNames <- whichItemsClassName(x, "simResult")$names
+    if (length(simResultNames) < 1) {
+        return(cat("No Results to Print"))
+    } else {
         print_sim_results(x)
     }
 }
@@ -350,14 +352,15 @@ print_sim_persons <- function(sim) {
 print_sim_results <- function(sim) {
     out <- list()
     simResultNames <- whichItemsClassName(sim)$names
+    if (length(simResultNames) < 1) return(cat("No Results to Print"))
     for (i in 1:length(simResultNames)) {
         if (length(simResultNames) > 1) cat("Results for ", simResultNames[i], "\n")
         out$SuccessStats <- getSuccessStats(sim, simResultNames[i])
         printSub("Success Rate vs Target", paste0(round(out$SuccessStats$vsTargetPct), "%"))
         printSub("Success Rate vs $0", paste0(round(out$SuccessStats$vs0Pct), "%"))
-        chartSuccessDonut(sim, "T", simResultNames[i])
-        chartSuccessDonut(sim, "Z", simResultNames[i])
-        chartValuesOverTime(sim, FALSE, simResultNames[i])
+        print(chartSuccessDonut(sim, "T", simResultNames[i]))
+        print(chartSuccessDonut(sim, "Z", simResultNames[i]))
+        print(chartValuesOverTime(sim, FALSE, simResultNames[i]))
     }
 
 }

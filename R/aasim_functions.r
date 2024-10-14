@@ -29,7 +29,7 @@ simulateWealth <- function(sim) {
         }
     }
 
-    for (iTrial in 1:sim$nTrials) {
+    for (iTrial in 1:out$nTrials) {
         out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
         if (sim$returnGeneratorMethod == "S") {
             out$rateOfReturns[[iTrial]] <- 1 + calcRandReturns(out$lengths[iTrial], sim$ror, sim$stdDev, 1)
@@ -68,33 +68,80 @@ simulateWealth <- function(sim) {
             }
         }
     }
-    class(out) <- "simResult"
+    class(out) <- c("simResult", class(out))
     return(out)
 }
 
+#' Helper function for Simulation methods
+#'
+#' @param sim Simulation object
+#'
+#' @return list with modified sim, sbiSub, and out list
+#'
+#' @examples \dontrun{initializeSimulation(sim)}
 initializeSimulation <- function(sim) {
+    out <- list()
     sbiSub <- sbi[sbi$Month >= sim$minDate & sbi$Month <= sim$maxDate,]
+    if (sim$returnGeneratorMethod == "C") {
+        out$nTrials <- nrow(sbiSub) - sim$length * 12 + 1
+    } else {
+        out$nTrials <- sim$nTrials
+    }
     set.seed(sim$seed)
     sim <- calcAgesForSimulation(sim) # adds curAge (nearest birthday) to person(s)
-    out <- getHorizons.sim(sim)
+    bknTrials <- sim$nTrials
+    sim$nTrials <- out$nTrials
+    out <- c(out, getHorizons.sim(sim))
+    sim$nTrials <- bknTrials
     out$portfolioValues <- list()
     out$rateOfReturns <- list()
     out$inflationHist <- list()
     out$cashFlows <- list()
-    out$irr <- numeric(sim$nTrials)
-    out$probSuccess <- as.numeric(rep(NA, sim$nTrials)) # only with RGM = "S"
+
+    out$irr <- numeric(out$nTrials)
+    out$probSuccess <- as.numeric(rep(NA, out$nTrials)) # only with RGM = "S"
     out$runDate <- Sys.Date()
     return(list(sim = sim, sbiSub = sbiSub, out = out))
 }
 
+#' Runs simulations on a simulation object
+#'
+#' Uses the Statistical, Historical and Chronological methods to generate returns.
+#'
+#' @param sim sim(ulation) object
+#'
+#' @return 3 lists (simS, simH, and simC) each with 6 items.
+#'   lengths is a vector containing the number of years of each trial.
+#'   agesDeath1 is a vector of the ages of the deaths of person 1.
+#'   agesDeath2 is a vector of the ages of the deaths of person 2.
+#'   cashFlows is a list, each item is a vector of the cashFlows of each trial.
+#'   portfolioValues is a list each item is a vector of portfolio values for each trial.
+#'   ratesOfReturns is a list each item is a vector of 1 + the annual rate of return
+#' @export
+#'
+#' @examples \dontrun{simulateSHC(sim)}
 simulateSHC <- function(sim) {
-    out <- list()
-    out$simS <- simulateMethodH(sim)
+    out <- sim
+    out$simS <- simulateMethodS(sim)
     out$simH <- simulateMethodH(sim)
-    out$simC <- simulateMethodH(sim)
+    out$simC <- simulateMethodC(sim)
     return(out)
 }
 
+#' Simulate using the Statistical Return Generating Method
+#'
+#' @param sim sim(ulation) object
+#'
+#' @return A list with 6 items.
+#'   lengths is a vector containing the number of years of each trial.
+#'   agesDeath1 is a vector of the ages of the deaths of person 1.
+#'   agesDeath2 is a vector of the ages of the deaths of person 2.
+#'   cashFlows is a list, each item is a vector of the cashFlows of each trial.
+#'   portfolioValues is a list each item is a vector of portfolio values for each trial.
+#'   ratesOfReturns is a list each item is a vector of 1 + the annual rate of return
+#' @export
+#'
+#' @examples \dontrun{simulateMethodS(sim)}
 simulateMethodS <- function(sim) {
     sim$returnGeneratorMethod <- "S"
     result <- initializeSimulation(sim)
@@ -123,10 +170,24 @@ simulateMethodS <- function(sim) {
             }
         }
     }
-    class(out) <- "simResult"
+    class(out) <- c("simResult", "methodS", class(out))
     return(out)
 }
 
+#' Simulate using the Historical Random Return Generating Method
+#'
+#' @param sim sim(ulation) object
+#'
+#' @return A list with 6 items.
+#'   lengths is a vector containing the number of years of each trial.
+#'   agesDeath1 is a vector of the ages of the deaths of person 1.
+#'   agesDeath2 is a vector of the ages of the deaths of person 2.
+#'   cashFlows is a list, each item is a vector of the cashFlows of each trial.
+#'   portfolioValues is a list each item is a vector of portfolio values for each trial.
+#'   ratesOfReturns is a list each item is a vector of 1 + the annual rate of return
+#' @export
+#'
+#' @examples \dontrun{simulateMethodH(sim)}
 simulateMethodH <- function(sim) {
     sim$returnGeneratorMethod <- "H"
     result <- initializeSimulation(sim)
@@ -157,12 +218,29 @@ simulateMethodH <- function(sim) {
             }
         }
     }
-    class(out) <- "simResult"
+    class(out) <- c("simResult", "methodH", class(out))
     return(out)
 }
 
+#' Simulate using the Chronological Return Generating Method
+#'
+#' @param sim sim(ulation) object
+#'
+#' @return A list with 6 items.
+#'   lengths is a vector containing the number of years of each trial.
+#'   agesDeath1 is a vector of the ages of the deaths of person 1.
+#'   agesDeath2 is a vector of the ages of the deaths of person 2.
+#'   cashFlows is a list, each item is a vector of the cashFlows of each trial.
+#'   portfolioValues is a list each item is a vector of portfolio values for each trial.
+#'   ratesOfReturns is a list each item is a vector of 1 + the annual rate of return
+#' @export
+#'
+#' @examples \dontrun{simulateMethodC(sim)}
 simulateMethodC <- function(sim) {
     sim$returnGeneratorMethod <- "C"
+
+    bkLengthType = sim$lengthType
+    sim$lengthType <- "F"
     result <- initializeSimulation(sim)
     sim <- result$sim
     sbiSub <- result$sbiSub
@@ -175,7 +253,7 @@ simulateMethodC <- function(sim) {
         sim$cf[idx, "endType"] <- "yr"
         sim$cf[idx, "end"] <- sim$length
     }
-    for (iTrial in 1:sim$nTrials) {
+    for (iTrial in 1:out$nTrials) {
         out$portfolioValues[[iTrial]] <- numeric(out$lengths[iTrial] + 1)
         temp <- calcChronologicalHist(iTrial, out$lengths[iTrial], sbiSub, sim$stockWt)
         out$rateOfReturns[[iTrial]] <- temp$return + 1
@@ -199,7 +277,9 @@ simulateMethodC <- function(sim) {
             }
         }
     }
-    class(out) <- "simResult"
+    sim$lengthType <- bkLengthType
+    out$nTrials <- nrow(sbiSub) - sim$length * 12 + 1
+    class(out) <- c("simResult", "methodC", class(out))
     return(out)
 }
 #' Get Time Horizons
@@ -498,6 +578,7 @@ validateCashFlows <- function(sim) {
 #'
 #' @examples \dontrun{calcIRR(cashflows)}
 calcIRR <- function(cashflows) {
+    if (is.na(sum(cashflows))) return(NA)
     if (length(cashflows) == 0) return(NA)
     # all cash flows are positive, return -100%.
     if (min(cashflows) >= 0) return(-1)

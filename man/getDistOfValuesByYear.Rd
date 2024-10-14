@@ -7,7 +7,8 @@
 getDistOfValuesByYear(
   sim,
   probs = c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
-  simResult = "simulation"
+  simResult = "simulation",
+  inflationAdjusted = TRUE
 )
 }
 \arguments{
@@ -17,6 +18,8 @@ getDistOfValuesByYear(
 default is c(0.0, 0.05, 0.25, 0.50, 0.75, 0.95, 1.0).}
 
 \item{simResult}{Name of item in sim with results (class = 'simResult')}
+
+\item{inflationAdjusted}{TRUE to adjust portfolio values by inflation, otherwise FALSE.}
 }
 \value{
 data frame

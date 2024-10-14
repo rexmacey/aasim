@@ -7,8 +7,9 @@
 chartSampleTrialsPortfolioValues(
   sim,
   sampleIndex,
-  logScale = TRUE,
-  simResult = "simulation"
+  logScale = FALSE,
+  simResult = "simulation",
+  inflationAdjusted = FALSE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ chartSampleTrialsPortfolioValues(
 \item{logScale}{True to display the y-axis in log format}
 
 \item{simResult}{Name of item in sim with results (class = 'simResult')}
+
+\item{inflationAdjusted}{TRUE to adjust portfolio values by inflation, otherwise FALSE.}
 }
 \value{
 Chart object (plotly)

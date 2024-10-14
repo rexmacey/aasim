@@ -19,12 +19,12 @@ chartSuccessDonut <- function(sim, vs = "T", simResult = "simulation") {
   if (vs == "T") {
       data <- data.frame(
           Legend = c("Success", "Failure"),
-          count = c(successStats$vsTargetCount, sim$nTrials - successStats$vsTargetCount))
+          count = c(successStats$vsTargetCount, sim[[simResult]]$nTrials - successStats$vsTargetCount))
       gtitle <- "Success Rate vs Target"
   } else {
       data <- data.frame(
           Legend = c("Success", "Failure"),
-          count = c(successStats$vs0Count, sim$nTrials - successStats$vs0Count))
+          count = c(successStats$vs0Count, sim[[simResult]]$nTrials - successStats$vs0Count))
       gtitle <- "Success Rate vs $0"
   }
 
@@ -46,6 +46,7 @@ chartSuccessDonut <- function(sim, vs = "T", simResult = "simulation") {
   out <- plot_ly(data, labels = ~Legend, values = ~count, type = 'pie', hole = 0.6,
                  textinfo = 'label+percent', insidetextorientation = 'radial') %>%
       plotly::layout(title = gtitle,
+             margin = list(t = 100),
              showlegend = TRUE,
              legend = list(orientation = 'h', x = 0.5, xanchor = 'center', y = -0.1))
   return(out)
@@ -60,14 +61,15 @@ chartSuccessDonut <- function(sim, vs = "T", simResult = "simulation") {
 #' @param sim Simulation object after running simulate function
 #' @param logScale TRUE to display a log scale on the y-axis, FALSE to display a linear scale.
 #' @param simResult Name of item in sim with results (class = 'simResult')
+#' @param inflationAdjusted TRUE to adjust portfolio values by inflation, otherwise FALSE.
 #'
 #' @return ggplot2 object
 #' @export
 #'
 #' @examples \dontrun{chartValuesOverTime(sim)}
-chartValuesOverTime <- function(sim, logScale = FALSE, simResult = "simulation") {
+chartValuesOverTime <- function(sim, logScale = FALSE, simResult = "simulation", inflationAdjusted = FALSE) {
     targetValues <- getTargetValues(sim, simResult)
-    data <- cbind(getDistOfValuesByYear(sim, c(0.05, 0.25, 0.50, 0.75, 0.95), simResult), Target = getTargetValues(sim, simResult))
+    data <- cbind(getDistOfValuesByYear(sim, c(0.05, 0.25, 0.50, 0.75, 0.95), simResult, inflationAdjusted), Target = getTargetValues(sim, simResult))
     # cols <- c("Median" = "red", "Target" = "black")
     # fills <- c("90%" = "lightblue", "50%" = "blue")
     # out <- ggplot(data, aes(x = Length)) +
@@ -236,6 +238,7 @@ chartDistOfTimeSub <- function(rawData, gtitle, xtitle, showLegend = TRUE) {
         showlegend = showLegend,
         legendgroup = ~EndAge) %>%
         plotly::layout(title = "", #gtitle
+                       margin = list(t = 100),
                xaxis = list(title = xtitle),
                yaxis = list(title = "# of Trials"),
                # legend = list(orientation = 'h', x = 0.5, xanchor = 'left', y = 1.1, title = "Quartile"),
@@ -302,14 +305,19 @@ chartDistOfTime <- function(sim, simResult = "simulation") {
 #' @param sampleSize Size of random sample
 #' @param logScale True to display the y-axis in log format
 #' @param simResult Name of item in sim with results (class = 'simResult')
+#' @param inflationAdjusted TRUE to adjust portfolio values by inflation, otherwise FALSE.
 #'
 #' @return Chart object (plotly)
 #' @export
 #'
 #' @examples \dontrun{chartRandomSmapleTrialsPortfolioValues(sim, sampleSize, logScale))}
-chartRandomSampleTrialsPortfolioValues <- function(sim, sampleSize, logScale = TRUE, simResult = "simulation") {
-    idxSmpl <- sample(1:length(sim[[simResult]]$portfolioValues), sampleSize)
-    return(chartSampleTrialsPortfolioValues(sim, idxSmpl, logScale))
+chartRandomSampleTrialsPortfolioValues <- function(sim, sampleSize, logScale = TRUE,
+                                                   simResult = "simulation",
+                                                   inflationAdjusted = FALSE) {
+    lenPV <- length(sim[[simResult]]$portfolioValues)
+    if (sampleSize > lenPV) sampleSize <- lenPV
+    idxSmpl <- sample(1:lenPV, sampleSize)
+    return(chartSampleTrialsPortfolioValues(sim, idxSmpl, logScale, simResult, inflationAdjusted))
 }
 
 #' Chart a Sample of the Trials (Wealth Over Time) Given a Vector of Indices
@@ -323,17 +331,25 @@ chartRandomSampleTrialsPortfolioValues <- function(sim, sampleSize, logScale = T
 #' @param sampleIndex Vector of indices of the trials to plot.
 #' @param logScale True to display the y-axis in log format
 #' @param simResult Name of item in sim with results (class = 'simResult')
+#' @param inflationAdjusted TRUE to adjust portfolio values by inflation, otherwise FALSE.
 #'
 #' @return Chart object (plotly)
 #' @export
 #'
 #' @examples \dontrun{chartSampleTrialsPortfolioValues(sim, sampleIndex, logScale)}
-chartSampleTrialsPortfolioValues <- function(sim, sampleIndex, logScale = TRUE, simResult = "simulation") {
+chartSampleTrialsPortfolioValues <- function(sim, sampleIndex, logScale = FALSE,
+                                             simResult = "simulation",
+                                             inflationAdjusted = FALSE) {
     # convert_to_hex <- function(color) {
     #     rgb_vals <- col2rgb(color)
     #     rgb(rgb_vals[1], rgb_vals[2], rgb_vals[3], maxColorValue = 255)
     # }
-    smpl <- sim[[simResult]]$portfolioValues[sampleIndex]
+    if (inflationAdjusted) {
+        pv <- inflationAdjustPortfolioValues(sim, simResult)
+    } else {
+        pv <- sim[[simResult]]$portfolioValues
+    }
+    smpl <- pv[sampleIndex]
     smplLengths <- sapply(smpl, length)
     max_length <- max(smplLengths)
     smplSuccessVsTarget <- getSuccessStats(sim, simResult)$successVsTargetByTrial[sampleIndex] # T/F by trial

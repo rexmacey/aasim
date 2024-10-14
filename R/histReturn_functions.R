@@ -50,10 +50,12 @@ calcRandHistReturns <- function(n,
                                 retAdj = 0,
                                 sbiSub,
                                 seed = NA) {
-    # utils::data("sbi") # stocks, bonds and inflation data by month
+
     if (!is.na(seed)) {
         set.seed(seed)
     }
+    # if (n < 1) return(c(return = NA, inflation = NA))
+    if (n < 1) n <- 1
     allowed_values <- c(1, 2, 3, 4, 5, 6, 12) # required so nConsecMonths can produce 12 months
     nConsecMonths <- as.numeric(match.arg(as.character(nConsecMonths), choices = as.character(allowed_values)))
 
