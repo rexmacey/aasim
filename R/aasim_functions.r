@@ -170,6 +170,7 @@ simulateMethodS <- function(sim) {
             }
         }
     }
+    out$returnGeneratingMethod = "Statistical Random"
     class(out) <- c("simResult", "methodS", class(out))
     return(out)
 }
@@ -218,6 +219,7 @@ simulateMethodH <- function(sim) {
             }
         }
     }
+    out$returnGeneratingMethod = "Historical Random"
     class(out) <- c("simResult", "methodH", class(out))
     return(out)
 }
@@ -279,6 +281,7 @@ simulateMethodC <- function(sim) {
     }
     sim$lengthType <- bkLengthType
     out$nTrials <- nrow(sbiSub) - sim$length * 12 + 1
+    out$returnGeneratingMethod = "Chronological"
     class(out) <- c("simResult", "methodC", class(out))
     return(out)
 }

@@ -274,8 +274,10 @@ print.sim <- function(x, ...) {
 #' Print main variables of a simulation object
 #'
 #' @param sim Simulation object
+#' @export
 #'
 #' @return Print
+#' @examples \dontrun{print_sim_main(sim)}
 print_sim_main <- function(sim) {
     printSub("Description", sim$description)
     if (sim$returnGeneratorMethod != "C") printSub("Number of trials", sim$nTrials)
@@ -316,8 +318,10 @@ printSub <- function(desc, value) {
 #' Print cash flow variables of a simulation object
 #'
 #' @param cf Cash flow table (data frame)
+#' @export
 #'
 #' @return Print
+#' @examples \dontrun{print_sim_cf(sim)}
 print_sim_cf <- function(cf) {
     print(cf)
 }
@@ -325,8 +329,10 @@ print_sim_cf <- function(cf) {
 #' Print person variables of a simulation object
 #'
 #' @param sim Simulation object
+#' @export
 #'
 #' @return Print
+#' @examples \dontrun{print_sim_persons(sim)}
 print_sim_persons <- function(sim) {
     if (nPersons.sim(sim) == 0) return()
     out <- data.frame(Name = sim$persons[[1]]$name,

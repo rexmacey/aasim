@@ -238,8 +238,8 @@ chartDistOfTimeSub <- function(rawData, gtitle, xtitle, showLegend = TRUE) {
         showlegend = showLegend,
         legendgroup = ~EndAge) %>%
         plotly::layout(title = "", #gtitle
-                       margin = list(t = 100),
-               xaxis = list(title = xtitle),
+                       margin = list(t = 50, b = 50),
+               xaxis = list(title = xtitle, standoff = 1),
                yaxis = list(title = "# of Trials"),
                # legend = list(orientation = 'h', x = 0.5, xanchor = 'left', y = 1.1, title = "Quartile"),
                annotations = list(
@@ -291,7 +291,10 @@ chartDistOfTime <- function(sim, simResult = "simulation") {
         p3 <- chartDistOfTimeSub(sim[[simResult]]$lengths, "Distribution of Lengths of Trials",
                                  "Length (Years)", TRUE)
         # return(ggarrange(p1, p2, p3, ncol = 1, nrow = 3))
-        out <- subplot(p1, p2, p3, nrows = 3, shareX = FALSE, titleX = TRUE, titleY = TRUE)
+        # out <- subplot(p1, p2, p3, nrows = 3, shareX = FALSE, titleX = TRUE, titleY = TRUE) %>%
+        #    plotly::layout(margin = list(t = 30, b = 30), height = 800)
+        out <- subplot(p1, p2, p3, nrows = 3, shareX = FALSE, titleX = TRUE, titleY = TRUE,
+                       margin = 0.1)
         return(out)
     }
 }
@@ -399,7 +402,7 @@ chartSampleTrialsPortfolioValues <- function(sim, sampleIndex, logScale = FALSE,
     out <- plot_ly(df_long, x = ~Time, y = ~Wealth, type = 'scatter',
                    mode = 'lines',
                    color = ~Color, colors = color_definitions,
-                   line = list(width = 0.25)) %>%
+                   line = list(width = 1)) %>%
         plotly::layout(title = paste0("Wealth Over Time (Sample of ", length(sampleIndex), " Trials)"),
                        xaxis = list(title = "Time (Years)"),
                        yaxis = list(title = "Wealth ($)",
@@ -418,3 +421,98 @@ chartSampleTrialsPortfolioValues <- function(sim, sampleIndex, logScale = FALSE,
     return(out)
 }
 
+#' Bar Chart Comparing Success Rates
+#'
+#' This will examine the sim for elements of class 'simResult'.  The
+#' success rates of those elements will be displayed in a bar chart.
+#'
+#' @param sim Simulation object
+#' @param vs 'T' (default) to use success rates against target value; otherwise
+#' success rates vs zero values will be used.
+#'
+#' @return Plotly bar chart object
+#' @export
+#'
+#' @examples \dontrun{chartSuccessBarComparison(sim, "T")}
+chartSuccessBarComparison <- function(sim, vs = "T") {
+    temp <- sim[sapply(sim, function(x) "simResult" %in% class(x))]
+    successStats <- lapply(names(temp), function(x) getSuccessStats(sim, x))
+    if (vs == "T") {item = "vsTargetPct"} else {item = "vs0Pct"}
+    data <- data.frame(Name = names(temp),
+                       SuccessRate = sapply(successStats, function(x) x[[item]]))
+    data[data[, "Name"] == "simC", "Name"] <- "Chronological"
+    data[data[, "Name"] == "simH", "Name"] <- "Historical Random"
+    data[data[, "Name"] == "simS", "Name"] <- "Statistical Random"
+    out <- plot_ly(data, x = ~Name, y = ~SuccessRate, type = 'bar', name = 'Success Rate') %>%
+        plotly::layout(title = "Comparison of Success Rates",
+                       xaxis = list(title = "Return Generating Method"),
+                       yaxis = list(title = "Success Rate (%)"))
+    return(out)
+}
+
+#' Chart Growth of $1 for Worst, Median and Best Trials
+#'
+#' This extracts the returns for the trials with the lowest, median and
+#' highest portfolio values.  It produces a line chart assuming an initial
+#' investment of $1 and no cashflows.  The portfolios values do consider cash
+#' flows.
+#'
+#' @param sim Simulation object
+#' @param simResult Name of item in sim with results (class = 'simResult')
+#'
+#' @return Plotly line chart object
+#' @export
+#'
+#' @examples \dontrun{chartGrowth1DollarBestMedianWorst(sim, simResult)}
+chartGrowth1DollarBestMedianWorst <- function(sim, simResult) {
+    idxVec <- c(Worst = findTrialByQuantile(sim, simResult, 0),
+                Median = findTrialByQuantile(sim, simResult, 0.5),
+                Best = findTrialByQuantile(sim, simResult, 1))
+    geomReturnLabels <- paste0(names(idxVec)," (CAGR = ", sapply(idxVec, function(x) round(getDistribution(unlist(sim[[simResult]]$rateOfReturns[x]), , TRUE)$geomAvg, 1)),"%)")
+    df <- getGrowth1Dollar(sim, simResult, idxVec)
+    colnames(df) <- c("Year", "Worst", "Median", "Best")
+    out <- plot_ly(df, x = ~Year)
+    for (i in 2:ncol(df)) {
+        column <- colnames(df)[i]
+        out <- out %>% add_lines(y = df[[column]], name = geomReturnLabels[i - 1])
+    }
+    # for(column in colnames(df)[-1]) {
+    #     out <- out %>% add_lines(y = df[[column]], name = column)
+    # }
+    out <- out %>%
+        plotly::layout(title = paste0("Rates of Return from the Worst, Median, and Best Trials"),
+                       xaxis = list(title = "Time (Years)"),
+                       yaxis = list(title = "Growth of $1",
+                                    type = "log"))
+    return(out)
+}
+
+#' Scatterplot of Terminal Values vs Average Returns
+#'
+#' @param sim Simulation object
+#' @param simResult Name of item in sim with results (class = 'simResult')
+#' @param logScale TRUE to show the y-axis on a log scale. Default = FALSE.
+#'
+#' @return Plotly chart object (scatter plot)
+#' @export
+#'
+#' @examples \dontrun{chartTerminalValuesVsAverageReturns(sim, simResult, FALSE)}
+chartTerminalValuesVsAverageReturns <- function(sim, simResult, logScale = FALSE) {
+    df <- data.frame(
+        rors= sapply(1:sim[[simResult]]$nTrials, function(x) round(getDistribution(unlist(sim[[simResult]]$rateOfReturns[x]), , TRUE)$geomAvg, 2)),
+        tvs = getTerminalValues(sim, simResult, FALSE)
+    )
+    if (logScale) {
+        scaleType <- "log"
+        df$tvs <- pmax(0.01, df$tvs) # can't show 0 on a log scale
+    } else {
+        scaleType <- "linear"
+    }
+    out <- plot_ly(df, x = ~rors, y = ~tvs, type = 'scatter', mode = 'markers') %>%
+        plotly::layout(
+            title = "Terminal Values vs. Average Returns",
+            xaxis = list(title = 'Average Rate of Return'),
+            yaxis = list(title = 'Terminal Values', type = scaleType)
+        )
+    return(out)
+}

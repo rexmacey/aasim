@@ -278,3 +278,158 @@ inflationAdjustPortfolioValues <- function(sim, simResult) {
     }
     return(out)
 }
+
+#' Compare Rates of Return
+#'
+#' Compares the rates of return from different simulations
+#'
+#' @param sim Simulation object
+#'
+#' @return data frame with the Method, GeomReturn, StdDev, and nObs
+#' @export
+#'
+#' @examples \dontrun{compareRateOfReturns(sim)}
+compareRateOfReturns <- function(sim) {
+    simResults <- sim[sapply(sim, function(x) "simResult" %in% class(x))]
+
+    out <- data.frame(Method = sapply(simResults, function(x) x$returnGeneratingMethod),
+                      'GeomReturn' = NA,
+                      'StdDev' = NA,
+                      nObs = NA,
+                      row.names = NULL)
+    for (i in 1:length(simResults)) {
+        simulationReturnStats <- getDistribution(unlist(simResults[[i]]$rateOfReturns), ,isReturnSeries = TRUE)
+        out[i, 'GeomReturn'] <- round(simulationReturnStats$geomAvg, 1)
+        out[i, 'StdDev'] <- round(simulationReturnStats$sd, 1)
+        out[i, "nObs"] <- prettyNum(simulationReturnStats$nObs, big.mark = ",")
+    }
+    return(out)
+}
+
+#' Make a Table Representing a Single Trial
+#'
+#' This function exists to produce a table reflecting the details of a single
+#' trial.   If the trial number is not supplied, a trial is selected with a
+#' length within the 50\% confidence interval and that is closest to the
+#' median terminal value.
+#'
+#' @param sim A simulation object
+#' @param simResult Name of item in sim with results (class = 'simResult')
+#' @param trialNum Optional - the trial number to create a table for
+#'
+#' @return a data frame with the Year, PortfolioValue, CashFlow, Return, and Inflation
+#' @export
+#'
+#' @examples \dontrun{makeTrialTable(sim, simResult, trialNum)}
+makeTrialTable <- function(sim, simResult, trialNum) {
+    if (missing(trialNum)) {  # select a representative trial
+        idx <- sim[[simResult]]$lengths >= quantile(sim[[simResult]]$lengths, 0.25) &
+            sim[[simResult]]$lengths <= quantile(sim[[simResult]]$lengths, 0.75) # length in 50% CI
+        tv <- getTerminalValues(sim, simResult)
+        trialNum <- which(idx)[which.min(abs(tv[idx] - median(tv)))]  # terminal value closest to median
+    }
+    trialLength <- sim[[simResult]]$lengths[trialNum]
+    nLives <- nPersons.sim(sim)
+
+    out <- data.frame(Year = 0:trialLength)
+    if (nLives >= 1) {
+        anb <- calculate_age_nearest_birthday(sim$persons[[1]]$birthDate, asOfDate = sim$asOfDate)
+        if (sim$persons[[1]]$initials == "") {
+            cname <- "AgeP1"
+        } else {
+            cname <- paste0("Age", sim$persons[[1]]$initials)
+        }
+        out[[cname]] <- anb:(anb + trialLength)
+    }
+    if (nLives >= 2) {
+        anb <- calculate_age_nearest_birthday(sim$persons[[2]]$birthDate, asOfDate = sim$asOfDate)
+        if (sim$persons[[2]]$initials == "") {
+            cname <- "AgeP2"
+        } else {
+            cname <- paste0("Age", sim$persons[[2]]$initials)
+        }
+        out[[cname]] <- anb:(anb + trialLength)
+    }
+    out[["PortfolioValue"]] <- prettyNum(sim[[simResult]]$portfolioValues[[trialNum]], big.mark = ",")
+    out[["CashFlow"]] <- prettyNum(sim[[simResult]]$cashFlows[[trialNum]], big.mark = ",", drop0trailing = FALSE)
+    out[["Return"]] <- c(NA, round(100 * sim[[simResult]]$rateOfReturns[[trialNum]] - 100, 2))
+    if (length(sim[[simResult]]$inflationHist) == 0) {
+        out[["Inflation"]] <- c(NA, rep(100 * sim$defaultInflation, trialLength))
+    } else {
+        out[["Inflation"]] <- c(NA, round(100 * sim[[simResult]]$inflationHist[[trialNum]] - 100, 2))
+    }
+    return(out)
+}
+
+#' Find Trial by Quantile
+#'
+#' This function returns the trial number (index) with
+#' a terminal value that matches the quantile (qTile).  So, qTile == 0 will
+#' identify which trial has the lowest value, 1 the highest, and 0.5 the median.
+#' If more than one trial has the same terminal value, the function returns the
+#' trial that has that terminal value earliest.  So, if the quantile of the
+#' terminal values is 0, and there are multiple trials that terminate with 0,
+#' the function returns the trial which ends with 0 earliest.
+#'
+#' @param sim Simulation object.
+#' @param simResult Name of item in sim with results (class = 'simResult')
+#' @param qTile Quantile (0 - 1) of terminal value
+#'
+#' @return Integer representing which trial terminates with the qTile value.
+#' @export
+#'
+#' @examples \dontrun{findTrialByQuantile(sim, simResult, qTile)}
+findTrialByQuantile <- function(sim, simResult, qTile) {
+    tv <- getTerminalValues(sim, simResult)
+    qTileTV <- quantile(tv, qTile)
+    idxVec <- which(tv == qTileTV)
+    idx <- which.min(sapply(idxVec, function(x) which(sim[[simResult]]$portfolioValues[[x]] == qTileTV)[1]))
+    return(idxVec[1])
+}
+
+#' Get Start and End Dates of Chronological Trials By Index
+#'
+#' Given a vector of indices, this will return the starting and ending months of those trials.
+#' So getDatesOfChronologicalTrial(sim, c(3,5)) would return the starting and ending months
+#' for the 3rd and 5th trials.
+#'
+#' @param sim Simulation object
+#' @param idxVec Vector of indices to a Chronological simulation
+#'
+#' @return list with startDates and endDates vectors
+#' @export
+#'
+#' @examples \dontrun{getDatesOfChronologicalTrial(sim, idxVec)}
+getDatesOfChronologicalTrial <- function(sim, idxVec) {
+    sbiSub <- sbi[sbi$Month >= sim$minDate & sbi$Month <= sim$maxDate,]
+    out <- list()
+    out$startDates <- sbiSub$Month[idxVec]
+    out$endDates <- sbiSub$Month[idxVec + sim$length * 12 - 1]
+    return(out)
+}
+
+#' Growth of $1
+#'
+#' Calculates the growth of $1 from the rates of returns in the
+#' trials specified by idxVec.
+#'
+#' @param sim Simulation object.
+#' @param simResult Name of item in sim with results (class = 'simResult')
+#' @param idxVec Vector of one or more indices representing a trial.
+#'
+#' @return Data frame. The number of row will be one more than the longest length of the trials. The
+#' first column is the year and each subsequent column is the growth of $1 for each element in idxVec.
+#' @export
+#'
+#' @examples \dontrun{getGrowth1Dollar(sim, simResult, c(1, 2, 3))}
+getGrowth1Dollar <- function(sim, simResult, idxVec) {
+    returnLst <- sim[[simResult]]$rateOfReturns[idxVec]
+    returnLst <- lapply(returnLst, function(x) c(1, cumprod(x)))
+    max_length <- max(sapply(returnLst, length))
+    df <- t(do.call(rbind, lapply(returnLst, function(x) {
+        length(x) <- max_length
+        x})))
+    df <- data.frame(cbind(0:(max_length - 1), df))
+    # View the resulting data frame
+    return(df)
+}

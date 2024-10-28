@@ -15,3 +15,6 @@ Print
 \description{
 Print cash flow variables of a simulation object
 }
+\examples{
+\dontrun{print_sim_cf(sim)}
+}

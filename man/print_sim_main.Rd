@@ -15,3 +15,6 @@ Print
 \description{
 Print main variables of a simulation object
 }
+\examples{
+\dontrun{print_sim_main(sim)}
+}

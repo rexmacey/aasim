@@ -15,3 +15,6 @@ Print
 \description{
 Print person variables of a simulation object
 }
+\examples{
+\dontrun{print_sim_persons(sim)}
+}
